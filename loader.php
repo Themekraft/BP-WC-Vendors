@@ -31,8 +31,9 @@
 
 add_action('init', 'bf_wc_vendors_includes', 10);
 function bf_wc_vendors_includes(){
+    include_once( dirname(__FILE__) . '/includes/functions.php');
     include_once( dirname(__FILE__) . '/includes/bf-wc-vendors.php');
-    include_once( dirname(__FILE__) . '/includes/class-wcvendors-pro-public.php');
+    include_once( dirname(__FILE__) . '/includes/bf-wc-vendors-js-css-overwrite.php');
 }
 
 add_action('plugins_loaded', 'bf_wc_vendors_requirements');
@@ -46,6 +47,6 @@ function bf_wc_vendors_requirements(){
 add_action( 'bp_setup_components'	, 'bf_wc_vendors_bp_init', 10 );
 function bf_wc_vendors_bp_init(){
   global $bp;
-  require( dirname( __FILE__ ) . '/includes/bf_wc_vendors_members_component.php' );
+  require( dirname( __FILE__ ) . '/includes/bf-wc-vendors-members-component.php' );
   $bp->bf_wc_vendors = new BuddyForms_WC_Vendors_Component();
 }
