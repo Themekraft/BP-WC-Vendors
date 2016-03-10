@@ -1,6 +1,6 @@
 <?php
 /*
- Plugin Name: BuddyForms WC-Vendors
+ Plugin Name: BuddyForms WC Vendors
  Plugin URI: http://themekraft.com/store/wordpress-front-end-editor-and-form-builder-buddyforms/
  Description: Integrates the WC-Vendors Plugin With BuddyForms
  Version: 0.0.1
@@ -31,13 +31,21 @@
 
 add_action('init', 'bf_wc_vendors_includes', 10);
 function bf_wc_vendors_includes(){
-    include_once(dirname(__FILE__) . '/includes/bf-wc-vendors.php');
+    include_once( dirname(__FILE__) . '/includes/bf-wc-vendors.php');
+    include_once( dirname(__FILE__) . '/includes/class-wcvendors-pro-public.php');
 }
 
 add_action('plugins_loaded', 'bf_wc_vendors_requirements');
 function bf_wc_vendors_requirements(){
-    if( ! defined( 'buddyforms' )){
-        add_action( 'admin_notices', create_function( '', 'printf(\'<div id="message" class="error"><p><strong>\' . __(\'BuddyForms Review needs BuddyForms to be installed. <a target="_blank" href="%s">--> Get it now</a>!\', " wc4bp_xprofile" ) . \'</strong></p></div>\', "http://themekraft.com/store/wordpress-front-end-editor-and-form-builder-buddyforms/" );' ) );
+    if( ! defined( 'BUDDYFORMS_VERSION' )){
+        add_action( 'admin_notices', create_function( '', 'printf(\'<div id="message" class="error"><p><strong>\' . __(\'BuddyForms WC Vendors needs BuddyForms to be installed. <a target="_blank" href="%s">--> Get it now</a>!\', " buddyforms" ) . \'</strong></p></div>\', "https://buddyforms.com" );' ) );
         return;
     }
+}
+
+add_action( 'bp_setup_components'	, 'bf_wc_vendors_bp_init', 10 );
+function bf_wc_vendors_bp_init(){
+  global $bp;
+  require( dirname( __FILE__ ) . '/includes/bf_wc_vendors_members_component.php' );
+  $bp->bf_wc_vendors = new BuddyForms_WC_Vendors_Component();
 }

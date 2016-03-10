@@ -1,40 +1,64 @@
 <?php
 
-remove_action( 'woocommerce_get_item_data', array( 'WCV_Vendor_Cart', 'sold_by' ), 10, 2 );
-add_action( 'woocommerce_get_item_data', 'tk_sold_by', 10, 2);
-function tk_sold_by( $values, $cart_item ){
+/* WC Vendors Pro Only - Adds View Store button to BuddyPress profiles */
+add_action('bp_member_header_actions', 'wcvendors_pro_bp_member_header_actions');
+function wcvendors_pro_bp_member_header_actions(){
+        $wcv_profile_id         = bp_displayed_user_id();
+        $wcv_profile_info       = get_userdata( bp_displayed_user_id() );
+        $wcv_profile_role       = implode( $wcv_profile_info->roles );
+        $store_url              = WCVendors_Pro_Vendor_Controller::get_vendor_store_url( $wcv_profile_id );
+        $sold_by                = '<div class="generic-button" id="post-mention"><a href="'.$store_url.'" class="send-message">Visit Store</a></div>';
 
-    $author_id = $cart_item[ 'data' ]->post->post_author;
-    $sold_by =  bp_core_get_userlink( $author_id, false, true );
-    $sold_by = '<a href="'. $sold_by .'/products">'.bp_core_get_user_displayname( $author_id ).'</a>';
-
-    $values[ ] = array(
-        'name'    => apply_filters('wcvendors_cart_sold_by', __( 'Sold by', 'wcvendors' )),
-        'display' => $sold_by,
-    );
-
-    return $values;
+        if ( $wcv_profile_info->roles[0] == "vendor" ) {
+                $vendor_name_message = get_the_author_meta( 'user_login' );
+                $current_user = wp_get_current_user();
+                echo $sold_by;
+        }
 }
 
-remove_action( 'woocommerce_product_meta_start', array( 'WCV_Vendor_Cart', 'sold_by_meta' ), 10, 2 );
-add_action( 'woocommerce_product_meta_start', 'tk_sold_by_meta', 10, 2);
-function tk_sold_by_meta()
-{
-    $author_id = get_the_author_meta( 'ID' );
-    $sold_by =  bp_core_get_userlink( $author_id, false, true );
-
-
-    $sold_by = WCV_Vendors::is_vendor( $author_id )
-        ? sprintf( '<a href="%sproducts">%s</a>', $sold_by, bp_core_get_user_displayname( $author_id ).'' )
-        : get_bloginfo( 'name' );
-
-    echo apply_filters('wcvendors_cart_sold_by_meta', __( 'Sold by: ', 'wcvendors' )) . $sold_by . '<br/>';
+/* WC Vendors Pro - Adds a View Profile link on the vendors store header */
+add_action('wcv_after_main_header', 'custom_wcv_after_vendor_store_title');
+function custom_wcv_after_vendor_store_title() {
+        $vendor_shop            = urldecode( get_query_var( 'vendor_shop' ) );
+        $wcv_profile_id = WCV_Vendors::get_vendor_id( $vendor_shop );
+        $profile_url =          bp_core_get_user_domain ( $wcv_profile_id );
+        echo '<center><a href="'. $profile_url .'/profile/" class="button">View Profile</a></center>';
 }
 
-remove_action( 'woocommerce_after_shop_loop_item', array('WCV_Vendor_Shop', 'template_loop_sold_by'), 9, 2);
-add_action( 'woocommerce_after_shop_loop_item', 'tk_template_loop_sold_by', 9, 2);
-function tk_template_loop_sold_by($product_id) {
-    $author     = WCV_Vendors::get_vendor_from_product( $product_id );
-    $sold_by =  bp_core_get_userlink( $author, false, true );
-    echo '<small>' . apply_filters('wcvendors_sold_by_in_loop', __( 'Solds by: ', 'wcvendors' )).'<a href="'. $sold_by .'/products">'.bp_core_get_user_displayname( $author ).'</a></small> <br />';
+/* WC Vendors Pro - Adds a link to Profile on Single Product Pages */
+add_action('woocommerce_product_meta_start', 'custom_woocommerce_product_meta_start');
+function custom_woocommerce_product_meta_start() {
+        $wcv_profile_id =       get_the_author_meta('ID');
+        $profile_url =          bp_core_get_user_domain ( $wcv_profile_id );
+        echo 'Vendor Profile: <a href="'. $profile_url .'">View My Profile</a>';
+}
+
+
+/* WC Vendors Pro - Adds a "Contact Vendor" link on Single Product Pages which uses BuddyPress Private Messages */
+add_action('woocommerce_product_meta_start', 'wcv_bppm_woocommerce_product_meta_start');
+function wcv_bppm_woocommerce_product_meta_start() {
+        if ( is_user_logged_in() ) {
+        $wcv_store_id =        get_the_author_meta('ID');
+        $wcv_store_name =      get_user_meta( $wcv_store_id, 'pv_shop_name', true);
+        echo '<br>Contact Vendor: <a href="' . bp_loggedin_user_domain() . bp_get_messages_slug() . '/compose/?r=' . get_the_author_meta('user_login') .'">Contact ' . $wcv_store_name . '</a>';
+        } else {
+        $wcv_my_account_url = get_permalink( get_option('woocommerce_myaccount_page_id'));
+        echo '<br>Contact Vendor: <a href="' . $wcv_my_account_url . '">Login or Register to Contact Vendor</a>';
+        }
+}
+
+/* Redirect Vendors to Vendor Dashboard on Login */
+add_filter('woocommerce_login_redirect', 'login_redirect', 10, 2);
+function login_redirect( $redirect_to, $user ) {
+
+    // WCV dashboard -- Uncomment the 3 lines below if using WC Vendors Free instead of WC Vendors Pro
+    // if (class_exists('WCV_Vendors') && WCV_Vendors::is_vendor( $user->id ) ) {
+    //  $redirect_to = get_permalink(WC_Vendors::$pv_options->get_option( 'vendor_dashboard_page' ));
+    // }
+
+    // WCV Pro Dashboard
+    if (class_exists('WCV_Vendors') && class_exists('WCVendors_Pro') && WCV_Vendors::is_vendor( $user->id ) ) {
+        $redirect_to = get_permalink(WCVendors_Pro::get_option( 'dashboard_page_id' ));
+    }
+    return $redirect_to;
 }

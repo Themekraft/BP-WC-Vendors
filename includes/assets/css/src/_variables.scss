@@ -1,0 +1,31 @@
+/** 
+*	WC Vendors Pro CSS Variables 
+*/
+
+$wcv:   			#86b854;
+$green:         	#86b854;
+$red:           	#a00;
+$orange:        	#ffba00;
+$blue:          	#008CBA;
+$white: 			#ffffff; 
+$grey: 				#fafafa; 
+
+$primary:           #86b854;                                    // Primary colour for buttons (alt)
+$primarytext:       desaturate(lighten($primary, 50%), 18%);    // Text on primary colour bg
+
+$secondary:         desaturate(lighten($primary, 40%), 21%);    // Secondary buttons
+$secondarytext:     desaturate(darken($secondary, 60%), 21%);   // Text on secondary colour bg
+
+$highlight:         adjust-hue($primary, 150deg);               // Prices, In stock labels, sales flash
+$highlightext:      desaturate(lighten($highlight, 50%), 18%);  // Text on highlight colour bg
+$font-icon: 		"FontAwesome"; 
+
+// Dashboard highlights 
+$dashgreen: 		#21785F; 
+$dashblue:			#1E86AB; 
+$dashlightblue: 	#96CBDE; 
+$dashbrown:			#854B46; 
+$dashred:			#AB1E3F;
+
+$dashbackground:	#f3f3f3; 
+$dashgrey:			#e1e1e1;

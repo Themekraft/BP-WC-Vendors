@@ -1,0 +1,65 @@
+/* 
+*	WCV Mixins 
+*/
+
+// Clear fix
+@mixin clearfix() {
+	*zoom: 1;
+
+	&:before,
+	&:after {
+		content: " ";
+		display: table;
+	}
+
+	&:after {
+		clear: both;
+	}
+}
+
+//  Border radius 
+@mixin border_radius($radius: 4px) {
+	border-radius: $radius;
+}
+
+
+@mixin ir() {
+	display: block;
+	text-indent: -9999px;
+	position: relative;
+	height: 1em;
+	width: 1em;
+}
+
+// Source: http://webdevstudios.com/2015/01/28/mapping-icon-fonts-with-sass/ 
+
+@mixin fa-icon($position: before, $icon: false, $styles: false){ 
+ 	@if $position == both { 
+ 		$position: 'before, &:after'; 
+ 	}
+
+ 	// Either a :before or :after pseudo-element, or both, defaulting to :before
+ 	&:#{$position} { 
+
+ 		@if $icon {
+ 			// A particular icon has been specified
+ 			content: "#{map-get($icons, $icon)}";
+ 		}
+
+ 		@if $styles {
+ 			// Supportive icon styles required
+ 			speak: none; 
+ 			font-style: normal; 
+ 			font-weight: normal; 
+ 			font-family: $font-icon; 
+ 		}
+
+		// Include any extra rules supplied for the pseudo-element
+		@content;
+ 	} 
+}
+
+$icons: ( 
+	search: "\f002", 
+	close: "\f00d"
+); 	

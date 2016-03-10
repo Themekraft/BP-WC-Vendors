@@ -1,0 +1,44 @@
+table {
+
+    &.#{$table-class-name} {
+
+        width: 100%;
+        border-collapse: collapse;
+        border-spacing: 0;
+
+        th, td {
+            padding: $table-cell-padding;
+            line-height: $table-row-line-height;
+            text-align: left;
+        }
+
+        th {
+            &[data-sortable="true"]{
+
+                &:hover {
+                    cursor: pointer;
+                    text-decoration: underline;
+                    i {
+                        text-decoration: none;
+                    }
+                }
+
+                i {
+                    padding-left: .5em;
+                }
+
+            }
+        }
+
+        &.hover {
+
+            tbody {
+
+                tr:hover { cursor: pointer; }
+
+            }
+        }
+
+        &.bordered { border-collapse: separate; }
+    }
+}
