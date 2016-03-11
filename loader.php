@@ -34,6 +34,10 @@ function bf_wc_vendors_includes(){
     include_once( dirname(__FILE__) . '/includes/functions.php');
     include_once( dirname(__FILE__) . '/includes/bf-wc-vendors.php');
     include_once( dirname(__FILE__) . '/includes/bf-wc-vendors-js-css-overwrite.php');
+
+    if(is_admin()){
+      include_once( dirname(__FILE__) . '/includes/admin/admin.php');
+    }
 }
 
 add_action('plugins_loaded', 'bf_wc_vendors_requirements');
