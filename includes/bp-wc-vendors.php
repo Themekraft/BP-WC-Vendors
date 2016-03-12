@@ -35,7 +35,7 @@ function custom_woocommerce_product_meta_start() {
 
 
 /* WC Vendors Pro - Adds a "Contact Vendor" link on Single Product Pages which uses BuddyPress Private Messages */
-add_action('woocommerce_product_meta_start', 'wcv_bppm_woocommerce_product_meta_start');
+//add_action('woocommerce_product_meta_start', 'wcv_bppm_woocommerce_product_meta_start');
 function wcv_bppm_woocommerce_product_meta_start() {
         if ( is_user_logged_in() ) {
         $wcv_store_id =        get_the_author_meta('ID');

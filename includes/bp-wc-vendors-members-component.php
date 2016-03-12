@@ -172,7 +172,20 @@ class BuddyForms_WC_Vendors_Component extends BP_Component{
 
   public function bp_wc_vendors_products() {
 
-    echo  do_shortcode('[buddyforms_the_loop form_slug="product"]');
+    set_query_var('object', 'product');
+
+    if(isset($bp->action_variables[0]))
+      set_query_var('action', $bp->action_variables[0]);
+
+    if(isset($bp->action_variables[1]))
+      set_query_var('object_id', $bp->action_variables[1]);
+
+    $type 		= get_query_var( 'object' );
+    $action 	= get_query_var( 'action' );
+    $id 		  = get_query_var( 'object_id' );
+
+    $bp_wc_vendors_dashboard = new BP_WCVendors_Pro_Dashboard('wcvendors-pro',WCV_PRO_VERSION, false);
+    $bp_wc_vendors_dashboard->load_page( $type, $action, $id );
 
   }
   public function bp_wc_vendors_orders() {

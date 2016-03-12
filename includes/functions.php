@@ -7,7 +7,11 @@ function bp_wc_vendors_front_js_css_loader($fount){
 
 add_filter('wcv_dashboard_quick_links', 'bp_wc_vendors_dashboard_quick_links', 1,1);
 function bp_wc_vendors_dashboard_quick_links($quick_links){
-  return array();
+
+  echo '<pre>';
+  print_r($quick_links);
+  echo '</pre>';
+  return $quick_links; //array();
 }
 
 add_action( 'template_redirect', 'bp_wc_vendors_redirect_to_profile' );
@@ -33,14 +37,18 @@ function bp_wc_vendors_get_redirect_link( $post_ID ) {
   $userdata     = get_userdata($current_user->ID);
   $link = '';
 
+
+
   $type 		= get_query_var( 'object' );
   $action 	= get_query_var( 'action' );
   $id 		  = get_query_var( 'object_id' );
 
   if ( $dashboard_page_id == $post_ID  ) {
-
     if($type == 'shop_coupon'){
       $link = get_bloginfo('url') . '/'.$bp->pages->members->slug.'/'. $userdata->user_nicename .'/vendor-dashboard/vendor-dashboard-coupons/' . $action . '/' . $id ;
+
+    } elseif($type == 'shop_coupon'){
+
     } else {
       $link = get_bloginfo('url') . '/'.$bp->pages->members->slug.'/'. $userdata->user_nicename .'/vendor-dashboard/';
     }
