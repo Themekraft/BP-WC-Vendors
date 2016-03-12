@@ -1,6 +1,6 @@
-=== BuddyForms WC-Vendors ===
+=== BP WC-Vendors ===
 Contributors: svenl77
-Tags: buddypress, woocommerce, vendors, wc-vendors, buddyforms, marketplace, user, members, profiles, custom post types, taxonomy, frontend posting, frontend editing, revision, review, moderation, frontend editor
+Tags: buddypress, woocommerce, vendors, wc-vendors, wc vendors, buddyforms, marketplace, user, members, profiles, custom post types, taxonomy, frontend posting, frontend editing, revision, review, moderation, frontend editor
 Requires at least: WordPress 4.1, BuddyPress 2.x
 Tested up to: WordPress 4.1, BuddyPress 2.x
 Stable tag: 1.0

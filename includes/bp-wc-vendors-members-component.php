@@ -2,7 +2,7 @@
 
 class BuddyForms_WC_Vendors_Component extends BP_Component{
 
-  public $id = 'bf_wc_vendors';
+  public $id = 'bp_wc_vendors';
 
  	/**
 	 * Initiate the class
@@ -17,7 +17,7 @@ class BuddyForms_WC_Vendors_Component extends BP_Component{
 			// Unique component ID
 			$this->id,
 			// Used by BP when listing components (eg in the Dashboard)
-			__( 'Vendor Dashboard', 'buddyforms' )
+			__( 'Vendor Dashboard', 'bp-wcv' )
 		);
 
 	}
@@ -55,14 +55,14 @@ class BuddyForms_WC_Vendors_Component extends BP_Component{
     if ( ! in_array( 'vendor', (array) $user->roles ) )
       return;
 
-    $bf_wc_vendors_options = get_option('bf_wc_vendors_options');
+    $bp_wc_vendors_options = get_option('bp_wc_vendors_options');
 
 		$main_nav = array(
 					'name' => 'Vendor Dashboard',
 					'slug' => $this->slug,
 					'position' => 71,
 					'default_subnav_slug' => 'vendor-dashboard',
-          'screen_function'     => array( $this, 'bf_wc_vendors_screen_settings' ),
+          'screen_function'     => array( $this, 'bp_wc_vendors_screen_settings' ),
           'show_for_displayed_user'       => false,
           'user_has_access' => bp_is_my_profile()
 			);
@@ -73,66 +73,66 @@ class BuddyForms_WC_Vendors_Component extends BP_Component{
   				'parent_slug' => 'vendor-dashboard',
   				'parent_url' => bp_displayed_user_domain() . 'vendor-dashboard/',
   				'item_css_id' => 'vendor-dashboard',
-  				'screen_function' => array($this, 'bf_wc_vendors_screen_settings'),
+  				'screen_function' => array($this, 'bp_wc_vendors_screen_settings'),
           'user_has_access' => bp_is_my_profile()
   		);
 
-      if(!isset($bf_wc_vendors_options['tab_products_disabled'])){
+      if(!isset($bp_wc_vendors_options['tab_products_disabled'])){
         $sub_nav[] = array(
     				'name' => 'Products',
     				'slug' => 'vendor-dashboard-products',
     				'parent_slug' => 'vendor-dashboard',
     				'parent_url' => bp_displayed_user_domain() . 'vendor-dashboard/',
     				'item_css_id' => 'vendor-dashboard',
-    				'screen_function' => array($this, 'bf_wc_vendors_screen_settings'),
+    				'screen_function' => array($this, 'bp_wc_vendors_screen_settings'),
             'user_has_access' => bp_is_my_profile()
     		);
       }
 
-      if(!isset($bf_wc_vendors_options['tab_orders_disabled'])){
+      if(!isset($bp_wc_vendors_options['tab_orders_disabled'])){
         $sub_nav[] = array(
             'name' => 'Orders',
             'slug' => 'vendor-dashboard-orders',
             'parent_slug' => 'vendor-dashboard',
             'parent_url' => bp_displayed_user_domain() . 'vendor-dashboard/',
             'item_css_id' => 'vendor-dashboard',
-            'screen_function' => array($this, 'bf_wc_vendors_screen_settings'),
+            'screen_function' => array($this, 'bp_wc_vendors_screen_settings'),
             'user_has_access' => bp_is_my_profile()
         );
       }
 
-      if(!isset($bf_wc_vendors_options['tab_settings_disabled'])){
+      if(!isset($bp_wc_vendors_options['tab_settings_disabled'])){
         $sub_nav[] = array(
     				'name' => 'Settings',
     				'slug' => 'vendor-dashboard-settings',
     				'parent_slug' => 'vendor-dashboard',
     				'parent_url' => bp_displayed_user_domain() . 'vendor-dashboard/',
     				'item_css_id' => 'vendor-dashboard',
-    				'screen_function' => array($this, 'bf_wc_vendors_screen_settings'),
+    				'screen_function' => array($this, 'bp_wc_vendors_screen_settings'),
             'user_has_access' => bp_is_my_profile()
     		);
       }
 
-      if(!isset($bf_wc_vendors_options['tab_ratings_disabled'])){
+      if(!isset($bp_wc_vendors_options['tab_ratings_disabled'])){
         $sub_nav[] = array(
             'name' => 'Ratings',
             'slug' => 'vendor-dashboard-ratings',
             'parent_slug' => 'vendor-dashboard',
             'parent_url' => bp_displayed_user_domain() . 'vendor-dashboard/',
             'item_css_id' => 'vendor-dashboard',
-            'screen_function' => array($this, 'bf_wc_vendors_screen_settings'),
+            'screen_function' => array($this, 'bp_wc_vendors_screen_settings'),
             'user_has_access' => bp_is_my_profile()
         );
       }
 
-      if(!isset($bf_wc_vendors_options['tab_coupongs_disabled'])){
+      if(!isset($bp_wc_vendors_options['tab_coupongs_disabled'])){
         $sub_nav[] = array(
             'name' => 'Coupongs',
             'slug' => 'vendor-dashboard-coupons',
             'parent_slug' => 'vendor-dashboard',
             'parent_url' => bp_displayed_user_domain() . 'vendor-dashboard/',
             'item_css_id' => 'vendor-dashboard',
-            'screen_function' => array($this, 'bf_wc_vendors_screen_settings'),
+            'screen_function' => array($this, 'bp_wc_vendors_screen_settings'),
             'user_has_access' => bp_is_my_profile()
         );
       }
@@ -141,59 +141,59 @@ class BuddyForms_WC_Vendors_Component extends BP_Component{
 
 	}
 
-  public function bf_wc_vendors_screen_settings() {
+  public function bp_wc_vendors_screen_settings() {
 
-    $bf_wc_wcvendors_pro_public = new BF_WCVendors_Pro_Public('wcvendors-pro',WCV_PRO_VERSION, false);
-    $bf_wc_wcvendors_pro_public->enqueue_styles();
-    $bf_wc_wcvendors_pro_public->enqueue_scripts();
+    $bp_wc_wcvendors_pro_public = new BP_WCVendors_Pro_Public('wcvendors-pro',WCV_PRO_VERSION, false);
+    $bp_wc_wcvendors_pro_public->enqueue_styles();
+    $bp_wc_wcvendors_pro_public->enqueue_scripts();
 
     switch (bp_current_action()) {
       case 'vendor-dashboard-products':
-        add_action( 'bp_template_content', array( $this, 'bf_wc_vendors_products' ) );
+        add_action( 'bp_template_content', array( $this, 'bp_wc_vendors_products' ) );
         break;
       case 'vendor-dashboard-orders':
-        add_action( 'bp_template_content', array( $this, 'bf_wc_vendors_orders' ) );
+        add_action( 'bp_template_content', array( $this, 'bp_wc_vendors_orders' ) );
         break;
       case 'vendor-dashboard-settings':
-        add_action( 'bp_template_content', array( $this, 'bf_wc_vendors_settings' ) );
+        add_action( 'bp_template_content', array( $this, 'bp_wc_vendors_settings' ) );
         break;
       case 'vendor-dashboard-ratings':
-        add_action( 'bp_template_content', array( $this, 'bf_wc_vendors_ratings' ) );
+        add_action( 'bp_template_content', array( $this, 'bp_wc_vendors_ratings' ) );
         break;
       case 'vendor-dashboard-coupons':
-        add_action( 'bp_template_content', array( $this, 'bf_wc_vendors_coupons' ) );
+        add_action( 'bp_template_content', array( $this, 'bp_wc_vendors_coupons' ) );
         break;
       default:
-        add_action( 'bp_template_content', array( $this, 'bf_wc_vendors_dashboard' ) );
+        add_action( 'bp_template_content', array( $this, 'bp_wc_vendors_dashboard' ) );
         break;
     }
     bp_core_load_template( 'members/single/plugins' );
   }
 
-  public function bf_wc_vendors_products() {
+  public function bp_wc_vendors_products() {
 
     echo  do_shortcode('[buddyforms_the_loop form_slug="product"]');
 
   }
-  public function bf_wc_vendors_orders() {
+  public function bp_wc_vendors_orders() {
 
-    $bf_wc_vendors_dashboard = new BF_WCVendors_Pro_Dashboard('wcvendors-pro',WCV_PRO_VERSION, false);
-    $bf_wc_vendors_dashboard->load_order_page();
-
-  }
-  public function bf_wc_vendors_settings() {
-
-    $bf_wc_vendors_dashboard = new BF_WCVendors_Pro_Dashboard('wcvendors-pro',WCV_PRO_VERSION, false);
-    $bf_wc_vendors_dashboard->load_settings_page();
+    $bp_wc_vendors_dashboard = new BP_WCVendors_Pro_Dashboard('wcvendors-pro',WCV_PRO_VERSION, false);
+    $bp_wc_vendors_dashboard->load_order_page();
 
   }
-  public function bf_wc_vendors_ratings() {
+  public function bp_wc_vendors_settings() {
 
-    $bf_wc_vendors_dashboard = new BF_WCVendors_Pro_Dashboard('wcvendors-pro',WCV_PRO_VERSION, false);
-    $bf_wc_vendors_dashboard->load_rating_page();
+    $bp_wc_vendors_dashboard = new BP_WCVendors_Pro_Dashboard('wcvendors-pro',WCV_PRO_VERSION, false);
+    $bp_wc_vendors_dashboard->load_settings_page();
 
   }
-  public function bf_wc_vendors_coupons() {
+  public function bp_wc_vendors_ratings() {
+
+    $bp_wc_vendors_dashboard = new BP_WCVendors_Pro_Dashboard('wcvendors-pro',WCV_PRO_VERSION, false);
+    $bp_wc_vendors_dashboard->load_rating_page();
+
+  }
+  public function bp_wc_vendors_coupons() {
     global $bp;
 
 
@@ -210,21 +210,21 @@ class BuddyForms_WC_Vendors_Component extends BP_Component{
     $action 	= get_query_var( 'action' );
     $id 		  = get_query_var( 'object_id' );
 
-    $bf_wc_vendors_dashboard = new BF_WCVendors_Pro_Dashboard('wcvendors-pro',WCV_PRO_VERSION, false);
-    $bf_wc_vendors_dashboard->load_page( $type, $action, $id );
+    $bp_wc_vendors_dashboard = new BP_WCVendors_Pro_Dashboard('wcvendors-pro',WCV_PRO_VERSION, false);
+    $bp_wc_vendors_dashboard->load_page( $type, $action, $id );
 
 
   }
-  public function bf_wc_vendors_dashboard() {
+  public function bp_wc_vendors_dashboard() {
 
-    $bf_wc_vendors_dashboard = new BF_WCVendors_Pro_Dashboard('wcvendors-pro',WCV_PRO_VERSION, false);
-    $bf_wc_vendors_dashboard->load_page('dashboard');
+    $bp_wc_vendors_dashboard = new BP_WCVendors_Pro_Dashboard('wcvendors-pro',WCV_PRO_VERSION, false);
+    $bp_wc_vendors_dashboard->load_page('dashboard');
 
   }
 
 }
 
-function bf_wc_vendors_register_member_types() {
+function bp_wc_vendors_register_member_types() {
     bp_register_member_type( 'vendor', array(
         'labels' => array(
             'name'          => 'Vendors',
@@ -232,9 +232,9 @@ function bf_wc_vendors_register_member_types() {
         ),
     ) );
 }
-add_action( 'bp_init', 'bf_wc_vendors_register_member_types' );
+add_action( 'bp_init', 'bp_wc_vendors_register_member_types' );
 
-function bf_wc_vendors_register_member_types_with_directory() {
+function bp_wc_vendors_register_member_types_with_directory() {
     bp_register_member_type( 'vendor', array(
         'labels' => array(
             'name'          => 'Vendors',
@@ -243,7 +243,7 @@ function bf_wc_vendors_register_member_types_with_directory() {
         'has_directory' => 'vendors'
     ) );
 }
-add_action( 'bp_register_member_types', 'bf_wc_vendors_register_member_types_with_directory' );
+add_action( 'bp_register_member_types', 'bp_wc_vendors_register_member_types_with_directory' );
 
 add_action( 'set_user_role', function( $user_id, $role, $old_roles ) {
 
@@ -259,7 +259,7 @@ add_action( 'set_user_role', function( $user_id, $role, $old_roles ) {
 
 
 
-class BF_WCVendors_Pro_Dashboard extends WCVendors_Pro_Dashboard{
+class BP_WCVendors_Pro_Dashboard extends WCVendors_Pro_Dashboard{
 	public function create_nav( ) {
     echo '';
   }

@@ -10,7 +10,7 @@
  * @subpackage WCVendors_Pro/public
  * @author     Jamie Madden <support@wcvendors.com>
  */
-class BF_WCVendors_Pro_Public {
+class BP_WCVendors_Pro_Public {
 
 	/**
 	 * The ID of this plugin.

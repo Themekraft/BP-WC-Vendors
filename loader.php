@@ -1,7 +1,7 @@
 <?php
 /*
- Plugin Name: BuddyForms WC Vendors
- Plugin URI: http://themekraft.com/store/wordpress-front-end-editor-and-form-builder-buddyforms/
+ Plugin Name: BP WC Vendors
+ Plugin URI: http://themekraft.com
  Description: Integrates the WC-Vendors Plugin With BuddyForms
  Version: 0.0.1
  Author: Sven Lehnert
@@ -29,28 +29,33 @@
  */
 
 
-add_action('init', 'bf_wc_vendors_includes', 10);
-function bf_wc_vendors_includes(){
+add_action('init', 'bp_wc_vendors_includes', 10);
+function bp_wc_vendors_includes(){
     include_once( dirname(__FILE__) . '/includes/functions.php');
-    include_once( dirname(__FILE__) . '/includes/bf-wc-vendors.php');
-    include_once( dirname(__FILE__) . '/includes/bf-wc-vendors-js-css-overwrite.php');
+    include_once( dirname(__FILE__) . '/includes/bp-wc-vendors.php');
+    include_once( dirname(__FILE__) . '/includes/bp-wc-vendors-js-css-overwrite.php');
 
     if(is_admin()){
       include_once( dirname(__FILE__) . '/includes/admin/admin.php');
     }
 }
 
-add_action('plugins_loaded', 'bf_wc_vendors_requirements');
-function bf_wc_vendors_requirements(){
-    if( ! defined( 'BUDDYFORMS_VERSION' )){
-        add_action( 'admin_notices', create_function( '', 'printf(\'<div id="message" class="error"><p><strong>\' . __(\'BuddyForms WC Vendors needs BuddyForms to be installed. <a target="_blank" href="%s">--> Get it now</a>!\', " buddyforms" ) . \'</strong></p></div>\', "https://buddyforms.com" );' ) );
-        return;
-    }
+add_action('plugins_loaded', 'bp_wc_vendors_requirements');
+function bp_wc_vendors_requirements(){
+    if( ! defined( 'BUDDYFORMS_VERSION' ))
+      add_action( 'admin_notices', create_function( '', 'printf(\'<div id="message" class="error"><p><strong>\' . __(\'BP WC Vendors needs BuddyForms to be installed. <a target="_blank" href="%s">--> Get it now</a>!\', "bp-wcv" ) . \'</strong></p></div>\', "https://buddyforms.com" );' ) );
+
+    if( ! defined( 'WCV_PRO_VERSION' ))
+      add_action( 'admin_notices', create_function( '', 'printf(\'<div id="message" class="error"><p><strong>\' . __(\'BP WC Vendors needs WC Vendors Pro to be installed. <a target="_blank" href="%s">--> Get it now</a>!\', "bp-wcv" ) . \'</strong></p></div>\', "https://www.wcvendors.com/product/wc-vendors-pro/" );' ) );
+
+    // if( ! defined( 'WC4BP' ))
+    //   add_action( 'admin_notices', create_function( '', 'printf(\'<div id="message" class="error"><p><strong>\' . __(\'BP WC Vendors needs WC4BP to be installed. <a target="_blank" href="%s">--> Get it now</a>!\', "bp-wcv" ) . \'</strong></p></div>\', "https://themekraft.com/" );' ) );
+
 }
 
-add_action( 'bp_setup_components'	, 'bf_wc_vendors_bp_init', 10 );
-function bf_wc_vendors_bp_init(){
+add_action( 'bp_setup_components'	, 'bp_wc_vendors_bp_init', 10 );
+function bp_wc_vendors_bp_init(){
   global $bp;
-  require( dirname( __FILE__ ) . '/includes/bf-wc-vendors-members-component.php' );
-  $bp->bf_wc_vendors = new BuddyForms_WC_Vendors_Component();
+  require( dirname( __FILE__ ) . '/includes/bp-wc-vendors-members-component.php' );
+  $bp->bp_wc_vendors = new BuddyForms_WC_Vendors_Component();
 }
