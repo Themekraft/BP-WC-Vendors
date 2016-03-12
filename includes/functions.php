@@ -25,8 +25,6 @@ function  bf_wc_vendors_redirect_to_profile() {
 	endif;
 }
 
-
-
 function bf_wc_vendors_get_redirect_link( $post_ID ) {
   global $bp, $current_user;
 
@@ -51,3 +49,19 @@ function bf_wc_vendors_get_redirect_link( $post_ID ) {
 
   return $link;
 }
+
+function bf_wc_vendors_no_admin_access() {
+  global $current_user, $bp;
+
+  $bf_wc_vendors_options = get_option('bf_wc_vendors_options');
+
+  if(isset($bf_wc_vendors_options['no_admin_access']))
+    return;
+
+   $user_roles = $current_user->roles;
+   $user_role = array_shift($user_roles);
+   if($user_role === 'vendor'){
+     bp_core_redirect( get_option('home') . '/' . $bp->pages->members->slug . '/' . bp_core_get_username( bp_loggedin_user_id() ) . '/vendor-dashboard' );
+   }
+}
+add_action( 'admin_init', 'bf_wc_vendors_no_admin_access', 100 );

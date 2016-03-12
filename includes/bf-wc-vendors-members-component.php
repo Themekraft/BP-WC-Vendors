@@ -55,7 +55,7 @@ class BuddyForms_WC_Vendors_Component extends BP_Component{
     if ( ! in_array( 'vendor', (array) $user->roles ) )
       return;
 
-    //$bf_wc_vendors_options = get_option('bf_wc_vendors_options');
+    $bf_wc_vendors_options = get_option('bf_wc_vendors_options');
 
 		$main_nav = array(
 					'name' => 'Vendor Dashboard',
@@ -77,56 +77,65 @@ class BuddyForms_WC_Vendors_Component extends BP_Component{
           'user_has_access' => bp_is_my_profile()
   		);
 
-      $sub_nav[] = array(
-  				'name' => 'Products',
-  				'slug' => 'vendor-dashboard-products',
-  				'parent_slug' => 'vendor-dashboard',
-  				'parent_url' => bp_displayed_user_domain() . 'vendor-dashboard/',
-  				'item_css_id' => 'vendor-dashboard',
-  				'screen_function' => array($this, 'bf_wc_vendors_screen_settings'),
-          'user_has_access' => bp_is_my_profile()
-  		);
+      if(!isset($bf_wc_vendors_options['tab_products_disabled'])){
+        $sub_nav[] = array(
+    				'name' => 'Products',
+    				'slug' => 'vendor-dashboard-products',
+    				'parent_slug' => 'vendor-dashboard',
+    				'parent_url' => bp_displayed_user_domain() . 'vendor-dashboard/',
+    				'item_css_id' => 'vendor-dashboard',
+    				'screen_function' => array($this, 'bf_wc_vendors_screen_settings'),
+            'user_has_access' => bp_is_my_profile()
+    		);
+      }
 
-      $sub_nav[] = array(
-          'name' => 'Orders',
-          'slug' => 'vendor-dashboard-orders',
-          'parent_slug' => 'vendor-dashboard',
-          'parent_url' => bp_displayed_user_domain() . 'vendor-dashboard/',
-          'item_css_id' => 'vendor-dashboard',
-          'screen_function' => array($this, 'bf_wc_vendors_screen_settings'),
-          'user_has_access' => bp_is_my_profile()
-      );
+      if(!isset($bf_wc_vendors_options['tab_orders_disabled'])){
+        $sub_nav[] = array(
+            'name' => 'Orders',
+            'slug' => 'vendor-dashboard-orders',
+            'parent_slug' => 'vendor-dashboard',
+            'parent_url' => bp_displayed_user_domain() . 'vendor-dashboard/',
+            'item_css_id' => 'vendor-dashboard',
+            'screen_function' => array($this, 'bf_wc_vendors_screen_settings'),
+            'user_has_access' => bp_is_my_profile()
+        );
+      }
 
-      $sub_nav[] = array(
-  				'name' => 'Settings',
-  				'slug' => 'vendor-dashboard-settings',
-  				'parent_slug' => 'vendor-dashboard',
-  				'parent_url' => bp_displayed_user_domain() . 'vendor-dashboard/',
-  				'item_css_id' => 'vendor-dashboard',
-  				'screen_function' => array($this, 'bf_wc_vendors_screen_settings'),
-          'user_has_access' => bp_is_my_profile()
-  		);
+      if(!isset($bf_wc_vendors_options['tab_settings_disabled'])){
+        $sub_nav[] = array(
+    				'name' => 'Settings',
+    				'slug' => 'vendor-dashboard-settings',
+    				'parent_slug' => 'vendor-dashboard',
+    				'parent_url' => bp_displayed_user_domain() . 'vendor-dashboard/',
+    				'item_css_id' => 'vendor-dashboard',
+    				'screen_function' => array($this, 'bf_wc_vendors_screen_settings'),
+            'user_has_access' => bp_is_my_profile()
+    		);
+      }
 
-      $sub_nav[] = array(
-          'name' => 'Ratings',
-          'slug' => 'vendor-dashboard-ratings',
-          'parent_slug' => 'vendor-dashboard',
-          'parent_url' => bp_displayed_user_domain() . 'vendor-dashboard/',
-          'item_css_id' => 'vendor-dashboard',
-          'screen_function' => array($this, 'bf_wc_vendors_screen_settings'),
-          'user_has_access' => bp_is_my_profile()
-      );
+      if(!isset($bf_wc_vendors_options['tab_ratings_disabled'])){
+        $sub_nav[] = array(
+            'name' => 'Ratings',
+            'slug' => 'vendor-dashboard-ratings',
+            'parent_slug' => 'vendor-dashboard',
+            'parent_url' => bp_displayed_user_domain() . 'vendor-dashboard/',
+            'item_css_id' => 'vendor-dashboard',
+            'screen_function' => array($this, 'bf_wc_vendors_screen_settings'),
+            'user_has_access' => bp_is_my_profile()
+        );
+      }
 
-      $sub_nav[] = array(
-          'name' => 'Coupongs',
-          'slug' => 'vendor-dashboard-coupons',
-          'parent_slug' => 'vendor-dashboard',
-          'parent_url' => bp_displayed_user_domain() . 'vendor-dashboard/',
-          'item_css_id' => 'vendor-dashboard',
-          'screen_function' => array($this, 'bf_wc_vendors_screen_settings'),
-          'user_has_access' => bp_is_my_profile()
-      );
-
+      if(!isset($bf_wc_vendors_options['tab_coupongs_disabled'])){
+        $sub_nav[] = array(
+            'name' => 'Coupongs',
+            'slug' => 'vendor-dashboard-coupons',
+            'parent_slug' => 'vendor-dashboard',
+            'parent_url' => bp_displayed_user_domain() . 'vendor-dashboard/',
+            'item_css_id' => 'vendor-dashboard',
+            'screen_function' => array($this, 'bf_wc_vendors_screen_settings'),
+            'user_has_access' => bp_is_my_profile()
+        );
+      }
 
 	   parent::setup_nav($main_nav, $sub_nav);
 

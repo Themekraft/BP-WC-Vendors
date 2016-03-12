@@ -1,11 +1,5 @@
 <?php
 
-// if(has_action('bf_wc_vendors_add_submenu_page')) {
-//     add_action( 'bf_wc_vendors_add_submenu_page', 'bf_wc_vendors_add_menu' );
-// } else {
-//     add_action( 'admin_notices', create_function( '', 'printf(\'<div id="message" class="error"><p><strong>\' . __(\'BP WC Vendors needs WooCommerce BuddyPress Integration to be installed. <a target="_blank" href="%s">--> Get it now</a>!\', " bf_wc_vendors_xprofile" ) . \'</strong></p></div>\', "http://themekraft.com/store/woocommerce-buddypress-integration-wordpress-plugin/" );' ) );
-// }
-
 if(!WCV_PRO_VERSION)
   add_action( 'admin_notices', create_function( '', 'printf(\'<div id="message" class="error"><p><strong>\' . __(\'BP WC Vendors needs WC Vendors Pro to be installed. <a target="_blank" href="%s">--> Get it now</a>!\', " bf_wc_vendors_xprofile" ) . \'</strong></p></div>\', "https://www.wcvendors.com/product/wc-vendors-pro/" );' ) );
 
@@ -37,7 +31,7 @@ function bf_wc_vendors_screen() {
           update_option('bf_wc_vendors_options',$_POST['bf_wc_vendors_options']);
       $bf_wc_vendors_options = get_option('bf_wc_vendors_options');
       ?>
-      <form method="post" action="?page=wc4bp-vs-screen">
+      <form method="post" action="?page=bf_wc_vendors_screen">
         <div id="post-body-content">
 
             <h3>BuddyPress WC Vendors Dependencies</h3>
@@ -56,27 +50,42 @@ function bf_wc_vendors_screen() {
             <p>Deactivate Vendor Daschboard Tabs</p>
             <?php
 
+            $tab_products_disabled = 0;
+            if(isset( $bf_wc_vendors_options['tab_products_disabled']))
+              $tab_products_disabled = $bf_wc_vendors_options['tab_products_disabled'];
+
+            $tab_orders_disabled = 0;
+            if(isset( $bf_wc_vendors_options['tab_orders_disabled']))
+                $tab_orders_disabled = $bf_wc_vendors_options['tab_orders_disabled'];
+
             $tab_settings_disabled = 0;
             if(isset( $bf_wc_vendors_options['tab_settings_disabled']))
               $tab_settings_disabled = $bf_wc_vendors_options['tab_settings_disabled'];
 
-            $tab_taxes_disabled = 0;
-            if(isset( $bf_wc_vendors_options['tab_taxes_disabled']))
-                $tab_taxes_disabled = $bf_wc_vendors_options['tab_taxes_disabled'];
+            $tab_ratings_disabled = 0;
+            if(isset( $bf_wc_vendors_options['tab_ratings_disabled']))
+                $tab_ratings_disabled = $bf_wc_vendors_options['tab_ratings_disabled'];
+
+            $tab_coupongs_disabled = 0;
+            if(isset( $bf_wc_vendors_options['tab_coupongs_disabled']))
+                $tab_coupongs_disabled = $bf_wc_vendors_options['tab_coupongs_disabled'];
 
             $no_admin_access = 0;
             if(isset( $bf_wc_vendors_options['no_admin_access']))
                 $no_admin_access = $bf_wc_vendors_options['no_admin_access'];
 
             ?>
+            <p><input name='bf_wc_vendors_options[tab_products_disabled]' type='checkbox' value='1' <?php checked( $tab_products_disabled, 1  ) ; ?> /> <b>Turn off "Products" tab. </b></p>
+            <p><input name='bf_wc_vendors_options[tab_orders_disabled]' type='checkbox' value='1' <?php checked( $tab_orders_disabled, 1  ) ; ?> /> <b>Turn off "Orders" tab. </b></p>
             <p><input name='bf_wc_vendors_options[tab_settings_disabled]' type='checkbox' value='1' <?php checked( $tab_settings_disabled, 1  ) ; ?> /> <b>Turn off "Settings" tab. </b></p>
-            <p><input name='bf_wc_vendors_options[tab_taxes_disabled]' type='checkbox' value='1' <?php checked( $tab_taxes_disabled, 1  ) ; ?> /> <b>Turn off "Taxes" tab. </b></p>
-            <p><input name='bf_wc_vendors_options[tab_settings_disabled]' type='checkbox' value='1' <?php checked( $tab_settings_disabled, 1  ) ; ?> /> <b>Turn off "Settings" tab. </b></p>
-            <p><input name='bf_wc_vendors_options[tab_taxes_disabled]' type='checkbox' value='1' <?php checked( $tab_taxes_disabled, 1  ) ; ?> /> <b>Turn off "Taxes" tab. </b></p>
+            <p><input name='bf_wc_vendors_options[tab_ratings_disabled]' type='checkbox' value='1' <?php checked( $tab_ratings_disabled, 1  ) ; ?> /> <b>Turn off "Ratings" tab. </b></p>
+            <p><input name='bf_wc_vendors_options[tab_coupongs_disabled]' type='checkbox' value='1' <?php checked( $tab_coupongs_disabled, 1  ) ; ?> /> <b>Turn off "Coupongs" tab. </b></p>
             <br>
             <br>
-            <h3>Deactivate WordPress Backend</h3>
-            <p>By default, vendors will be redirected to their BuddyPress 'Member Profile Vendors Dashboard' if they try to access the backend ( /wp-admin ).</p>
+            <h3>Deactivate WordPress Dashboard for Vendors</h3>
+            <p>By default, only vendors will be redirected to their BuddyPress 'Member Profile Vendors Dashboard' if they try to access the backend ( /wp-admin ). All other roles will be able ti acces the wp admin.</p>
+            <p>In the WC Vendor Pro settings you can set WordPress Dashboard to "Only administrators can access the /wp-admin/ dashboard".<p>
+
             <p><input name='bf_wc_vendors_options[no_admin_access]' type='checkbox' value='1' <?php checked( $no_admin_access, 1  ) ; ?> /> <b>Turn off the redicet and enable admin backend access. </b></p>
             <br>
             <br>
