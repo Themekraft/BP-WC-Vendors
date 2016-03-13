@@ -171,7 +171,7 @@ class BuddyForms_WC_Vendors_Component extends BP_Component{
   }
 
   public function bp_wc_vendors_products() {
-
+      global $bp;
     set_query_var('object', 'product');
 
     if(isset($bp->action_variables[0]))
@@ -184,9 +184,11 @@ class BuddyForms_WC_Vendors_Component extends BP_Component{
     $action 	= get_query_var( 'action' );
     $id 		  = get_query_var( 'object_id' );
 
-    $bp_wc_vendors_dashboard = new BP_WCVendors_Pro_Dashboard('wcvendors-pro',WCV_PRO_VERSION, false);
-    $bp_wc_vendors_dashboard->load_page( $type, $action, $id );
-
+    // $bp_wc_vendors_dashboard = new BP_WCVendors_Pro_Dashboard('wcvendors-pro',WCV_PRO_VERSION, false);
+    // $bp_wc_vendors_dashboard->load_page( $type, $action, $id );
+    // bp_wc_vendors_locate_template('buddyforms/members/members-post-display.php');
+    // bp_wc_vendors_locate_template('buddyforms/members/members-post-create.php');
+    echo do_shortcode('[buddyforms_the_loop form_slug="product"]');
   }
   public function bp_wc_vendors_orders() {
 
@@ -208,8 +210,6 @@ class BuddyForms_WC_Vendors_Component extends BP_Component{
   }
   public function bp_wc_vendors_coupons() {
     global $bp;
-
-
 
     set_query_var('object', 'shop_coupon');
 
@@ -276,4 +276,18 @@ class BP_WCVendors_Pro_Dashboard extends WCVendors_Pro_Dashboard{
 	public function create_nav( ) {
     echo '';
   }
+}
+
+/**
+ * Locate a template
+ *
+ * @package BuddyForms
+ * @since 0.1 beta
+ */
+function bp_wc_vendors_locate_template($file) {
+    if (locate_template(array($file), false)) {
+        locate_template(array($file), true);
+    } else {
+        include (BP_WCV_TEMPLATE_PATH . $file);
+    }
 }

@@ -2,7 +2,7 @@
 /*
  Plugin Name: BP WC Vendors
  Plugin URI: http://themekraft.com
- Description: Integrates the WC-Vendors Plugin With BuddyForms
+ Description: Integrates the WC Vendors Pro Plugin With BuddyPress
  Version: 0.0.1
  Author: Sven Lehnert
  Author URI: http://themekraft.com/members/svenl77/
@@ -29,8 +29,22 @@
  */
 
 
+// Include all needed files
 add_action('init', 'bp_wc_vendors_includes', 10);
 function bp_wc_vendors_includes(){
+
+  if (!defined('BP_WCV_PLUGIN_URL'))
+    define('BP_WCV_PLUGIN_URL', plugins_url('/',__FILE__));
+
+  if (!defined('BP_WCV_INSTALL_PATH'))
+    define('BP_WCV_INSTALL_PATH', dirname(__FILE__) . '/');
+
+  if (!defined('BP_WCV_INCLUDES_PATH'))
+    define('BP_WCV_INCLUDES_PATH', BP_WCV_INSTALL_PATH . 'includes/');
+
+  if (!defined('BP_WCV_TEMPLATE_PATH'))
+    define('BP_WCV_TEMPLATE_PATH', BP_WCV_INSTALL_PATH . 'includes/templates/');
+
     include_once( dirname(__FILE__) . '/includes/functions.php');
     include_once( dirname(__FILE__) . '/includes/bp-wc-vendors.php');
     include_once( dirname(__FILE__) . '/includes/bp-wc-vendors-js-css-overwrite.php');
@@ -40,19 +54,14 @@ function bp_wc_vendors_includes(){
     }
 }
 
+// Check all dependencies
 add_action('plugins_loaded', 'bp_wc_vendors_requirements');
 function bp_wc_vendors_requirements(){
-    if( ! defined( 'BUDDYFORMS_VERSION' ))
-      add_action( 'admin_notices', create_function( '', 'printf(\'<div id="message" class="error"><p><strong>\' . __(\'BP WC Vendors needs BuddyForms to be installed. <a target="_blank" href="%s">--> Get it now</a>!\', "bp-wcv" ) . \'</strong></p></div>\', "https://buddyforms.com" );' ) );
-
     if( ! defined( 'WCV_PRO_VERSION' ))
       add_action( 'admin_notices', create_function( '', 'printf(\'<div id="message" class="error"><p><strong>\' . __(\'BP WC Vendors needs WC Vendors Pro to be installed. <a target="_blank" href="%s">--> Get it now</a>!\', "bp-wcv" ) . \'</strong></p></div>\', "https://www.wcvendors.com/product/wc-vendors-pro/" );' ) );
-
-    // if( ! defined( 'WC4BP' ))
-    //   add_action( 'admin_notices', create_function( '', 'printf(\'<div id="message" class="error"><p><strong>\' . __(\'BP WC Vendors needs WC4BP to be installed. <a target="_blank" href="%s">--> Get it now</a>!\', "bp-wcv" ) . \'</strong></p></div>\', "https://themekraft.com/" );' ) );
-
 }
 
+// Load the BuddyPress needed files and create the BP WC Vendors Component
 add_action( 'bp_setup_components'	, 'bp_wc_vendors_bp_init', 10 );
 function bp_wc_vendors_bp_init(){
   global $bp;

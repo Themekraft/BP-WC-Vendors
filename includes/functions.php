@@ -46,9 +46,8 @@ function bp_wc_vendors_get_redirect_link( $post_ID ) {
   if ( $dashboard_page_id == $post_ID  ) {
     if($type == 'shop_coupon'){
       $link = get_bloginfo('url') . '/'.$bp->pages->members->slug.'/'. $userdata->user_nicename .'/vendor-dashboard/vendor-dashboard-coupons/' . $action . '/' . $id ;
-
-    } elseif($type == 'shop_coupon'){
-
+    } elseif($type == 'product'){
+      $link = get_bloginfo('url') . '/'.$bp->pages->members->slug.'/'. $userdata->user_nicename .'/vendor-dashboard/vendor-dashboard-products/' . $action . '/' . $id ;
     } else {
       $link = get_bloginfo('url') . '/'.$bp->pages->members->slug.'/'. $userdata->user_nicename .'/vendor-dashboard/';
     }
