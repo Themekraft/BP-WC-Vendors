@@ -171,7 +171,8 @@ class BuddyForms_WC_Vendors_Component extends BP_Component{
   }
 
   public function bp_wc_vendors_products() {
-      global $bp;
+    global $bp;
+
     set_query_var('object', 'product');
 
     if(isset($bp->action_variables[0]))
@@ -184,11 +185,12 @@ class BuddyForms_WC_Vendors_Component extends BP_Component{
     $action 	= get_query_var( 'action' );
     $id 		  = get_query_var( 'object_id' );
 
-    // $bp_wc_vendors_dashboard = new BP_WCVendors_Pro_Dashboard('wcvendors-pro',WCV_PRO_VERSION, false);
-    // $bp_wc_vendors_dashboard->load_page( $type, $action, $id );
+    $bp_wc_vendors_dashboard = new BP_WCVendors_Pro_Dashboard('wcvendors-pro',WCV_PRO_VERSION, false);
+    $bp_wc_vendors_dashboard->load_page( $type, $action, $id );
+
     // bp_wc_vendors_locate_template('buddyforms/members/members-post-display.php');
     // bp_wc_vendors_locate_template('buddyforms/members/members-post-create.php');
-    echo do_shortcode('[buddyforms_the_loop form_slug="product"]');
+    // echo do_shortcode('[buddyforms_the_loop form_slug="product"]');
   }
   public function bp_wc_vendors_orders() {
 

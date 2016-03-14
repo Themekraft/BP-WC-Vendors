@@ -78,7 +78,7 @@ function bp_wc_vendors_screen() {
                     If you make the product tab a main nav item it is great for showing all vendor products in the profile. Normal profile visiters can see the vendor products. The vendor can create and edit.
                   </p>
                 </li>
-                <li>
+                <!-- <li>
                   <b>2. Use BuddyForms in Vendor Dashooard</b>
                   <p>
                     Products tab will remine in the vendors dashboard but the product list and form will be generated from BuddyForms.
@@ -86,7 +86,7 @@ function bp_wc_vendors_screen() {
                     You can select a default form for every post type in the BuddyForms settings. Please make sure you have a product form selected for the custom post type products
                   </p>
                   <p><input name='bp_wc_vendors_options[buddyforms_form]' type='checkbox' value='1' <?php checked( $buddyforms_form, 1  ) ; ?> /> <b>Use BuddyForms for product creation/management</b></p>
-                </li>
+                </li> -->
               </ul>
 
             <?php } ?>
