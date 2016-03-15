@@ -1,5 +1,5 @@
 === BP WC Vendors ===
-Contributors: svenl77
+Contributors: svenl77, themekraft, buddyforms, 
 Tags: multi vendor, marketplace, buddypress, woocommerce, vendor stores, vendors, wc-vendors, wc vendors, wc4bp , buddyforms, marketplace, user, members, profiles, custom post types, taxonomy, frontend posting, frontend editing, revision, review, moderation, frontend editor
 Requires at least: WordPress 3.9
 Tested up to: WordPress 4.4.2
