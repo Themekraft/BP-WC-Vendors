@@ -37,9 +37,9 @@ function bp_wc_vendors_screen() {
   if(isset( $bp_wc_vendors_options['tab_ratings_disabled']))
       $tab_ratings_disabled = $bp_wc_vendors_options['tab_ratings_disabled'];
 
-  $tab_coupongs_disabled = 0;
-  if(isset( $bp_wc_vendors_options['tab_coupongs_disabled']))
-      $tab_coupongs_disabled = $bp_wc_vendors_options['tab_coupongs_disabled'];
+  $tab_coupons_disabled = 0;
+  if(isset( $bp_wc_vendors_options['tab_coupons_disabled']))
+      $tab_coupons_disabled = $bp_wc_vendors_options['tab_coupons_disabled'];
 
   $no_admin_access = 0;
   if(isset( $bp_wc_vendors_options['no_admin_access']))
@@ -57,7 +57,7 @@ function bp_wc_vendors_screen() {
             <p><input name='bp_wc_vendors_options[tab_orders_disabled]' type='checkbox' value='1' <?php checked( $tab_orders_disabled, 1  ) ; ?> /> <b>Turn off "Orders" tab. </b></p>
             <p><input name='bp_wc_vendors_options[tab_settings_disabled]' type='checkbox' value='1' <?php checked( $tab_settings_disabled, 1  ) ; ?> /> <b>Turn off "Settings" tab. </b></p>
             <p><input name='bp_wc_vendors_options[tab_ratings_disabled]' type='checkbox' value='1' <?php checked( $tab_ratings_disabled, 1  ) ; ?> /> <b>Turn off "Ratings" tab. </b></p>
-            <p><input name='bp_wc_vendors_options[tab_coupongs_disabled]' type='checkbox' value='1' <?php checked( $tab_coupongs_disabled, 1  ) ; ?> /> <b>Turn off "Coupongs" tab. </b></p>
+            <p><input name='bp_wc_vendors_options[tab_coupons_disabled]' type='checkbox' value='1' <?php checked( $tab_coupons_disabled, 1  ) ; ?> /> <b>Turn off "Coupons" tab. </b></p>
             <br>
             <h3>Deactivate WordPress Dashboard for Vendors</h3>
             <p>By default, only vendors will be redirected to their BuddyPress 'Member Profile Vendors Dashboard' if they try to access the back-end ( /wp-admin ). All other roles will be able to access the wp admin.</p>

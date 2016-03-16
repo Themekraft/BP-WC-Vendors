@@ -125,9 +125,9 @@ class BuddyForms_WC_Vendors_Component extends BP_Component{
         );
       }
 
-      if(!isset($bp_wc_vendors_options['tab_coupongs_disabled'])){
+      if(!isset($bp_wc_vendors_options['tab_coupons_disabled'])){
         $sub_nav[] = array(
-            'name' => 'Coupongs',
+            'name' => 'Coupons',
             'slug' => 'vendor-dashboard-coupons',
             'parent_slug' => 'vendor-dashboard',
             'parent_url' => bp_displayed_user_domain() . 'vendor-dashboard/',
