@@ -3,7 +3,7 @@ Contributors: svenl77, themekraft, buddyforms,
 Tags: multi vendor, marketplace, buddypress, woocommerce, vendor stores, vendors, wc-vendors, wc vendors, wc4bp , buddyforms, marketplace, user, members, profiles, custom post types, taxonomy, frontend posting, frontend editing, revision, review, moderation, frontend editor
 Requires at least: WordPress 3.9
 Tested up to: WordPress 4.4.2
-Stable tag: 1.0.1
+Stable tag: 1.0.2
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -38,7 +38,7 @@ You can deactivate tabs if you not need them in your setup
 <li>Turn off "Ratings" tab</li>
 <li>Turn off "Coupons" tab</li>
 </ul>
-<br><br>
+<br>
 
 <h4>Deactivate WordPress Dashboard for Vendors</h4>
 By default, only vendors will be redirected to their BuddyPress 'Member Profile Vendors Dashboard' if they try to access the backend ( /wp-admin ). All other roles will be able to access the wp admin.
@@ -125,6 +125,9 @@ We believe that WC Vendors is the best vendor solution on the market and want to
 2. BuddyPress Members View
 
 == Changelog ==
+
+= 1.0.2 =
+Check if the user role is vendor and only redirect to the profile if the user is a vendor.
 
 = 1.0.1 =
 * prefix all functions

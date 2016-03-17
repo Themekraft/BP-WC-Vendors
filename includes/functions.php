@@ -24,7 +24,11 @@ function  bp_wc_vendors_redirect_to_profile() {
 	if( ! isset( $post->ID ) || ! is_user_logged_in() )
 		return false;
 
-	$link =  bp_wc_vendors_get_redirect_link( $post->ID );
+  $user = wp_get_current_user();
+  if ( !in_array( 'vendor', (array) $user->roles ) )
+    return false;
+
+  $link =  bp_wc_vendors_get_redirect_link( $post->ID );
 
 	if( ! empty( $link ) ) :
 		wp_safe_redirect( $link );
