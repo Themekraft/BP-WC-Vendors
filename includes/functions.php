@@ -39,10 +39,16 @@ function  bp_wc_vendors_redirect_to_profile() {
 function bp_wc_vendors_get_redirect_link( $post_ID ) {
   global $bp, $current_user;
 
+  $link = '';
+
   $dashboard_page_id 		= WCVendors_Pro::get_option( 'dashboard_page_id' );
+
+  if(!$dashboard_page_id)
+    return $link;
+
   $current_user = wp_get_current_user();
   $userdata     = get_userdata($current_user->ID);
-  $link = '';
+
 
   $type 		= get_query_var( 'object' );
   $action 	= get_query_var( 'action' );

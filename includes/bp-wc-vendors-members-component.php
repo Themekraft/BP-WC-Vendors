@@ -17,7 +17,7 @@ class BuddyForms_WC_Vendors_Component extends BP_Component{
 			// Unique component ID
 			$this->id,
 			// Used by BP when listing components (eg in the Dashboard)
-			__( 'Vendor Dashboard', 'bp-wcv' )
+			__( 'Vendor Dashboard', 'wcvendors' )
 		);
 
 	}
@@ -55,10 +55,13 @@ class BuddyForms_WC_Vendors_Component extends BP_Component{
     if ( ! in_array( 'vendor', (array) $user->roles ) )
       return;
 
-    $bp_wc_vendors_options = get_option('bp_wc_vendors_options');
+    $bp_wc_vendors_options  = get_option('bp_wc_vendors_options');
+    $dashboard_page_id   		= WCVendors_Pro::get_option( 'dashboard_page_id' );
 
-		$main_nav = array(
-					'name' => 'Vendor Dashboard',
+    $dashboard_page_title   = get_the_title($dashboard_page_id);
+
+    $main_nav = array(
+					'name' => $dashboard_page_title,
 					'slug' => $this->slug,
 					'position' => 71,
 					'default_subnav_slug' => 'vendor-dashboard',
@@ -68,7 +71,7 @@ class BuddyForms_WC_Vendors_Component extends BP_Component{
 			);
 
       $sub_nav[] = array(
-  				'name' => 'Dashboard',
+  				'name' => $dashboard_page_title,
   				'slug' => 'vendor-dashboard',
   				'parent_slug' => 'vendor-dashboard',
   				'parent_url' => bp_displayed_user_domain() . 'vendor-dashboard/',
@@ -79,7 +82,7 @@ class BuddyForms_WC_Vendors_Component extends BP_Component{
 
       if(!isset($bp_wc_vendors_options['tab_products_disabled'])){
         $sub_nav[] = array(
-    				'name' => 'Products',
+    				'name' => __('Products','wcvendors'),
     				'slug' => 'vendor-dashboard-products',
     				'parent_slug' => 'vendor-dashboard',
     				'parent_url' => bp_displayed_user_domain() . 'vendor-dashboard/',
@@ -91,7 +94,7 @@ class BuddyForms_WC_Vendors_Component extends BP_Component{
 
       if(!isset($bp_wc_vendors_options['tab_orders_disabled'])){
         $sub_nav[] = array(
-            'name' => 'Orders',
+            'name' => __('Orders','wcvendors'),
             'slug' => 'vendor-dashboard-orders',
             'parent_slug' => 'vendor-dashboard',
             'parent_url' => bp_displayed_user_domain() . 'vendor-dashboard/',
@@ -103,7 +106,7 @@ class BuddyForms_WC_Vendors_Component extends BP_Component{
 
       if(!isset($bp_wc_vendors_options['tab_settings_disabled'])){
         $sub_nav[] = array(
-    				'name' => 'Settings',
+    				'name' => __('Settings','wcvendors'),
     				'slug' => 'vendor-dashboard-settings',
     				'parent_slug' => 'vendor-dashboard',
     				'parent_url' => bp_displayed_user_domain() . 'vendor-dashboard/',
@@ -115,7 +118,7 @@ class BuddyForms_WC_Vendors_Component extends BP_Component{
 
       if(!isset($bp_wc_vendors_options['tab_ratings_disabled'])){
         $sub_nav[] = array(
-            'name' => 'Ratings',
+            'name' => __('Ratings','wcvendors'),
             'slug' => 'vendor-dashboard-ratings',
             'parent_slug' => 'vendor-dashboard',
             'parent_url' => bp_displayed_user_domain() . 'vendor-dashboard/',
@@ -127,7 +130,7 @@ class BuddyForms_WC_Vendors_Component extends BP_Component{
 
       if(!isset($bp_wc_vendors_options['tab_coupons_disabled'])){
         $sub_nav[] = array(
-            'name' => 'Coupons',
+            'name' => __('Coupons','wcvendors'),
             'slug' => 'vendor-dashboard-coupons',
             'parent_slug' => 'vendor-dashboard',
             'parent_url' => bp_displayed_user_domain() . 'vendor-dashboard/',
