@@ -75,6 +75,9 @@ function bp_wc_vendors_get_redirect_link( $post_ID ) {
 function bp_wc_vendors_no_admin_access() {
   global $current_user, $bp;
 
+  if ( defined( 'DOING_AJAX' ) && DOING_AJAX )
+      return;
+
   $bp_wc_vendors_options = get_option('bp_wc_vendors_options');
 
   if(isset($bp_wc_vendors_options['no_admin_access']))
@@ -87,3 +90,17 @@ function bp_wc_vendors_no_admin_access() {
    }
 }
 add_action( 'admin_init', 'bp_wc_vendors_no_admin_access', 100 );
+
+/**
+ * Check if a subscriber have the needed rights to upload images and add this capabilities if needed.
+ *
+ * @package BuddyForms
+ * @since 0.5 beta
+ */
+add_action('init', 'bp_wc_allow_vendor_uploads');
+function bp_wc_allow_vendor_uploads() {
+    if ( current_user_can('vendor') && !current_user_can('upload_files') ){
+        $contributor = get_role('vendor');
+        $contributor->add_cap('upload_files');
+    }
+}

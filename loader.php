@@ -45,13 +45,13 @@ function bp_wc_vendors_includes(){
   if (!defined('BP_WCV_TEMPLATE_PATH'))
     define('BP_WCV_TEMPLATE_PATH', BP_WCV_INSTALL_PATH . 'includes/templates/');
 
-    include_once( dirname(__FILE__) . '/includes/functions.php');
-    include_once( dirname(__FILE__) . '/includes/bp-wc-vendors.php');
-    include_once( dirname(__FILE__) . '/includes/bp-wc-vendors-js-css-overwrite.php');
+  include_once( dirname(__FILE__) . '/includes/functions.php');
+  include_once( dirname(__FILE__) . '/includes/bp-wc-vendors.php');
+  include_once( dirname(__FILE__) . '/includes/bp-wc-vendors-js-css-overwrite.php');
 
-    if(is_admin()){
-      include_once( dirname(__FILE__) . '/includes/admin/admin.php');
-    }
+  if(is_admin()){
+    include_once( dirname(__FILE__) . '/includes/admin/admin.php');
+  }
 }
 
 // Check all dependencies
