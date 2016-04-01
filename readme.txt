@@ -45,7 +45,7 @@ By default, only vendors will be redirected to their BuddyPress 'Member Profile 
 In the WC Vendor Pro settings you can set WordPress dashboard to "only administrators can access the /wp-admin/ dashboard".
 <br><br>
 
-<h4>Vendor Store Settings<h4>
+<h4>Vendor Store Settings</h4>
 <ul>
 <li>Redirect the Vendor Store to the BuddyPress Vendor Profile </li>
 <li>Integrate into Members Profile as new Tab Select the Product Form</li>
@@ -55,13 +55,12 @@ If you make the product tab a main nav item it is great for showing all vendor p
 Normal profile visitors can see the vendor products. The vendor can create and edit and manage his products
 <br><br>
 
-<h4>Deactivate Links<h4>
+<h4>Deactivate Links</h4>
 <ul>
 <li>Deactivate the "Visit Store" link in the BuddyPress Members Profile Headder</li>
 <li>Deactivate the "Profile Links" in the Vendor Shop Product listings and Products Single Views</li>
 <li>Deactivate the "Sold by" links in the Product Listings and Single View</li>
 <li>Deactivate the "Contact Vendor" links in the Product Single View</li>
-<li></li>
 </ul>
 <br><br>
 
