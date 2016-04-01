@@ -45,6 +45,26 @@ By default, only vendors will be redirected to their BuddyPress 'Member Profile 
 In the WC Vendor Pro settings you can set WordPress dashboard to "only administrators can access the /wp-admin/ dashboard".
 <br><br>
 
+<h4>Vendor Store Settings<h4>
+<ul>
+<li>Redirect the Vendor Store to the BuddyPress Vendor Profile </li>
+<li>Integrate into Members Profile as new Tab Select the Product Form</li>
+</ul>
+You can deactivate the product tab and use the BuddyForms Members extension to separate the product tab from the vendors dashboard.
+If you make the product tab a main nav item it is great for showing all vendor products in the profile.
+Normal profile visitors can see the vendor products. The vendor can create and edit and manage his products
+<br><br>
+
+<h4>Deactivate Links<h4>
+<ul>
+<li>Deactivate the "Visit Store" link in the BuddyPress Members Profile Headder</li>
+<li>Deactivate the "Profile Links" in the Vendor Shop Product listings and Products Single Views</li>
+<li>Deactivate the "Sold by" links in the Product Listings and Single View</li>
+<li>Deactivate the "Contact Vendor" links in the Product Single View</li>
+<li></li>
+</ul>
+<br><br>
+
 <h4>BP WC Vendors Dependencies</h4>
 <p>Please make sure you have the following plugins installed and activated:</p>
 <ul>
@@ -127,6 +147,11 @@ We believe that WC Vendors is the best vendor solution on the market and want to
 == Changelog ==
 
 = 1.0.5 =
+* Add the price and add to cart button to the BuddyForms product list
+* Create redirect for the vendor store and form select to redirect to BuddyForms view.
+* Create new settings page table
+* Add new options to show hide vendor relevant links like visit_store_disabled, view_profile_disabled, sold_by_disabled, Disable Contact Vendor Link
+* Smaller improvements bug fixes and new options.
 
 = 1.0.4 =
 * Fixed a strange issue with wc vendors quick links. The coupons code was displayed as empty link if disabled.
