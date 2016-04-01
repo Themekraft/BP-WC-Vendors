@@ -275,11 +275,11 @@ add_action( 'set_user_role', function( $user_id, $role, $old_roles ) {
 
 }, 10, 3 );
 
-
-
-class BP_WCVendors_Pro_Dashboard extends WCVendors_Pro_Dashboard{
-	public function create_nav( ) {
-    echo '';
+if(class_exists('WCVendors_Pro_Dashboard')){
+  class BP_WCVendors_Pro_Dashboard extends WCVendors_Pro_Dashboard{
+  	public function create_nav( ) {
+      echo '';
+    }
   }
 }
 

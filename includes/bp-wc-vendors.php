@@ -83,5 +83,7 @@ function bp_wc_vendors_buddyforms_the_loop_actions($post_id){
   $product = new WC_Product( $post_id );
 
   if($product->price)
-    echo 'Price: ' . $product->price;
+    echo $product->get_price_html() . ' ';
+    echo woocommerce_template_loop_add_to_cart();
+
 }

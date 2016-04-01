@@ -95,9 +95,12 @@ function bp_wc_vendors_screen() {
                   </td>
                 </tr>
                 <tr>
-    							<th><label for="">Integrate into Members Profile as new Tab <br>
-
-                    BuddyForms Required</label></th>
+    							<th><label for="">Integrate into Members Profile as new Tab <br><br>BuddyForms Required</label>
+                    <?php if(!is_array($buddyforms)) { ?>
+                      <br><br>
+                      <a href="https://buddyforms.com" target="_blank">Get BuddyForms Now</a>
+                    <?php } ?>
+                  </th>
     							<td>
                   <p>Select the Product Form</p>
                   <?php isset( $bp_wc_vendors_options['integrate_vendor_store_form'] ) ? $integrate_vendor_store_form = $bp_wc_vendors_options['integrate_vendor_store_form'] : $integrate_vendor_store_form = 'none'; ?>
