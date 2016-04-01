@@ -77,3 +77,11 @@ function bp_wc_vendors_disable_sold_by(){
   remove_action( 'woocommerce_product_meta_start', array( 'WCV_Vendor_Cart', 'sold_by_meta' ), 10, 2 );
   remove_action( 'woocommerce_after_shop_loop_item', array('WCV_Vendor_Shop', 'template_loop_sold_by'), 9, 2);
 }
+
+add_action('buddyforms_the_loop_item_last', 'bp_wc_vendors_buddyforms_the_loop_actions',10,1);
+function bp_wc_vendors_buddyforms_the_loop_actions($post_id){
+  $product = new WC_Product( $post_id );
+
+  if($product->price)
+    echo 'Price: ' . $product->price;
+}
