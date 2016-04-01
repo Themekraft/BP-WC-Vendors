@@ -3,7 +3,7 @@ Contributors: svenl77, themekraft, buddyforms,
 Tags: multi vendor, marketplace, buddypress, woocommerce, vendor stores, vendors, wc-vendors, wc vendors, wc4bp , buddyforms, marketplace, user, members, profiles, custom post types, taxonomy, frontend posting, frontend editing, revision, review, moderation, frontend editor
 Requires at least: WordPress 3.9
 Tested up to: WordPress 4.5
-Stable tag: 1.0.4
+Stable tag: 1.0.5
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -125,6 +125,8 @@ We believe that WC Vendors is the best vendor solution on the market and want to
 2. BuddyPress Members View
 
 == Changelog ==
+
+= 1.0.5 =
 
 = 1.0.4 =
 * Fixed a strange issue with wc vendors quick links. The coupons code was displayed as empty link if disabled.
