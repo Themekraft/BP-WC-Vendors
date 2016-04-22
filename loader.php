@@ -33,6 +33,9 @@
 add_action('init', 'bp_wc_vendors_includes', 10);
 function bp_wc_vendors_includes(){
 
+  if( ! defined( 'WCV_PRO_VERSION' ))
+    return;
+
   if (!defined('BP_WCV_PLUGIN_URL'))
     define('BP_WCV_PLUGIN_URL', plugins_url('/',__FILE__));
 
@@ -65,6 +68,10 @@ function bp_wc_vendors_requirements(){
 add_action( 'bp_setup_components'	, 'bp_wc_vendors_bp_init', 10 );
 function bp_wc_vendors_bp_init(){
   global $bp;
+
+  if( ! defined( 'WCV_PRO_VERSION' ))
+    return;
+
   require( dirname( __FILE__ ) . '/includes/bp-wc-vendors-members-component.php' );
   $bp->bp_wc_vendors = new BuddyForms_WC_Vendors_Component();
 }
