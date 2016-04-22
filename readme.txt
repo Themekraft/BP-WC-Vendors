@@ -67,9 +67,9 @@ Normal profile visitors can see the vendor products. The vendor can create and e
 <h4>BP WC Vendors Dependencies</h4>
 <p>Please make sure you have the following plugins installed and activated:</p>
 <ul>
-  <li><b>BuddyPress</b></li>
-  <li><b>WooCommerce</b></li>
-  <li><b>WC Vendor PRO</b></li>
+  <li><a href="https://wordpress.org/plugins/buddypress/">BuddyPress</a></li>
+  <li><a href="https://wordpress.org/plugins/woocommerce/">WooCommerce</a></li>
+  <li><a href="https://www.wcvendors.com/product/wc-vendors-pro/">WC Vendor PRO</a></li>
 </ul>
 <br><br>
 
