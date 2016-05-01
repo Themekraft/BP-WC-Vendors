@@ -146,11 +146,10 @@ class BuddyForms_WC_Vendors_Component extends BP_Component{
 
   public function bp_wc_vendors_screen_settings() {
 
-    $bp_wc_wcvendors_pro_public = new BP_WCVendors_Pro_Public('wcvendors-pro',WCV_PRO_VERSION, false);
-    $bp_wc_wcvendors_pro_public->enqueue_styles();
-    $bp_wc_wcvendors_pro_public->enqueue_scripts();
+    add_filter( 'wcv_view_dashboard', 'bp_wc_vendors_view' );
+    add_filter( 'wcv_view_feedback', 'bp_wc_vendors_view' );
 
-    switch (bp_current_action()) {
+    switch ( bp_current_action() ) {
       case 'vendor-dashboard-products':
         add_action( 'bp_template_content', array( $this, 'bp_wc_vendors_products' ) );
         break;

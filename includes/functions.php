@@ -23,9 +23,6 @@ function bp_wc_vendors_dashboard_quick_links($quick_links){
   return $quick_links_new;
 }
 
-
-
-
 add_action( 'template_redirect', 'bp_wc_vendors_store_redirect_to_profile' );
 function  bp_wc_vendors_store_redirect_to_profile() {
   global $bp;
@@ -136,4 +133,8 @@ function bp_wc_allow_vendor_uploads() {
         $contributor = get_role('vendor');
         $contributor->add_cap('upload_files');
     }
+}
+
+function bp_wc_vendors_view(){
+  return true;
 }
