@@ -12,13 +12,13 @@ function bp_wc_vendors_dashboard_quick_links( $quick_links ) {
 
 	$quick_links_new = Array();
 
-	if ( ! isset( $bp_wc_vendors_options['tab_products_disabled'] ) ) {
-		$quick_links_new['product'] = $quick_links['product'];
-	}
+//	if ( ! isset( $bp_wc_vendors_options['tab_products_disabled'] ) ) {
+//		$quick_links_new['product'] = $quick_links['product'];
+//	}
 
-	if ( ! isset( $bp_wc_vendors_options['tab_coupons_disabled'] ) ) {
-		$quick_links_new['shop_coupon'] = $quick_links['shop_coupon'];
-	}
+//	if ( ! isset( $bp_wc_vendors_options['tab_coupons_disabled'] ) ) {
+//		$quick_links_new['shop_coupon'] = $quick_links['shop_coupon'];
+//	}
 
 	return $quick_links_new;
 }
