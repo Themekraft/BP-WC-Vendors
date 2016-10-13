@@ -15,7 +15,7 @@ function bp_wc_vendors_bp_member_header_actions() {
 	$store_url        = WCVendors_Pro_Vendor_Controller::get_vendor_store_url( $wcv_profile_id );
 	$sold_by          = '<div class="generic-button" id="post-mention"><a href="' . $store_url . '" class="send-message">Visit Store</a></div>';
 
-	if ( $wcv_profile_info->roles[0] == "vendor" ) {
+	if ( isset($wcv_profile_info->roles[0]) && $wcv_profile_info->roles[0] == "vendor" ) {
 		$vendor_name_message = get_the_author_meta( 'user_login' );
 		$current_user        = wp_get_current_user();
 		echo $sold_by;

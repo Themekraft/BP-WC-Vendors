@@ -49,7 +49,7 @@ function bp_wc_vendors_screen() {
             <?php
             wp_nonce_field( "bp-wc-vendors-settings-page" );
 
-             if ( 'true' == esc_attr( $_GET['updated'] ) ) echo '<div class="updated" ><p>Settings updated.</p></div>';
+             if ( isset($_GET['updated']) && 'true' == esc_attr( $_GET['updated'] ) ) echo '<div class="updated" ><p>Settings updated.</p></div>';
             // if ( isset ( $_GET['tab'] ) ) bp_wc_vendors_tabs($_GET['tab']); else bp_wc_vendors_tabs('vendor_dashboard');
             //
             // if ( isset ( $_GET['tab'] ) ) $tab = $_GET['tab']; else $tab = 'vendor_dashboard'; ?>
@@ -90,7 +90,7 @@ function bp_wc_vendors_screen() {
   								<td>
                   <p>Redirect the Vendor Store to the BuddyPress Vendor Profile</p>
                   <?php isset( $bp_wc_vendors_options['redirect_vendor_store_to_profil'] ) ? $redirect_vendor_store_to_profil = $bp_wc_vendors_options['redirect_vendor_store_to_profil'] : $redirect_vendor_store_to_profil = 0; ?>
-                  <p><input name='bp_wc_vendors_options[redirect_vendor_store_to_profil]' type='checkbox' value='1' <?php checked( $redirect_vendor_store_to_profil, 1  ) ; ?> /> <b>redirect_vendor_store_to_profil</b></p>
+                  <p><input name='bp_wc_vendors_options[redirect_vendor_store_to_profil]' type='checkbox' value='1' <?php checked( $redirect_vendor_store_to_profil, 1  ) ; ?> /> <b>Redirect Vendor Store to Profile</b></p>
 
                   </td>
                 </tr>
