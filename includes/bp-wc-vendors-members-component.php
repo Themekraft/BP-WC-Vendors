@@ -177,14 +177,18 @@ class BuddyForms_WC_Vendors_Component extends BP_Component {
 	public function bp_wc_vendors_products() {
 		global $bp;
 
-		set_query_var( 'object', 'product' );
+		set_query_var( 'object', 'product', 'action', 'object_id');
 
-		if ( isset( $bp->action_variables[0] ) ) {
+		if ( isset( $bp->action_variables[0] ) && $bp->action_variables[0] != 'page' ) {
 			set_query_var( 'action', $bp->action_variables[0] );
 		}
 
-		if ( isset( $bp->action_variables[1] ) ) {
+		if ( isset( $bp->action_variables[1] ) && $bp->action_variables[0] != 'page' ) {
 			set_query_var( 'object_id', $bp->action_variables[1] );
+		}
+
+		if ( isset( $bp->action_variables[1] ) && $bp->action_variables[0] == 'page' ) {
+			set_query_var( 'paged', $bp->action_variables[1] );
 		}
 
 		$type   = get_query_var( 'object' );
