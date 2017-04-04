@@ -1,11 +1,11 @@
 <?php
 /*
  Plugin Name: BP WC Vendors
- Plugin URI: http://themekraft.com
+ Plugin URI: https://themekraft.com/products/bp-wc-vendors/
  Description: Integrates the WC Vendors Pro Plugin With BuddyPress
  Version: 1.0.9
- Author: Sven Lehnert
- Author URI: http://themekraft.com/members/svenl77/
+ Author: ThemeKraft
+ Author URI: http://themekraft.com/
  License: GPLv3 or later
  Network: false
 
