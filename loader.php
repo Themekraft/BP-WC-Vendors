@@ -89,3 +89,15 @@ function bp_wc_vendors_bp_init() {
 	require( dirname( __FILE__ ) . '/includes/bp-wc-vendors-members-component.php' );
 	$bp->bp_wc_vendors = new BuddyForms_WC_Vendors_Component();
 }
+
+function bp_wc_vendors_free_pro_admin_notice() {
+	?>
+	<div class="notice notice-error is-dismissible">
+		<p><b>The plugin does not support WooCommerce 3.0 and will become a free/pro Plugin</b></p>
+		<p>With this Notice we want to inform existing users of the Free BP WC Vendors Plugin about an important change.</p>
+		<p>Please Read the Blog Post <a href="https://themekraft.com/bp-wc-vendors-will-become-freepro-plugin/" target="_blank">Important Changes to the Plugin</a></p>
+
+	</div>
+	<?php
+}
+add_action( 'admin_notices', 'bp_wc_vendors_free_pro_admin_notice' );
