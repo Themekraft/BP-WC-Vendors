@@ -50,12 +50,6 @@ function bp_wc_vendors_store_redirect_to_profile() {
 		return;
 	}
 
-	if ( ! isset( $bp_wc_vendors_options['integrate_vendor_store_form'] ) ) {
-		return;
-	}
-
-	$form_slug = $bp_wc_vendors_options['integrate_vendor_store_form'];
-
 	$vendor_shop = get_query_var( 'vendor_shop' );
 
 	if ( $form_slug == 'none' ) {
@@ -205,4 +199,21 @@ function bp_wc_vendors_woocommerce_before_template_part($located, $template_name
 	}
 
 	return $located;
+}
+
+ add_filter( 'buddyforms_members_parent_tab', 'bp_wc_vendors_buddyforms_members_parent_tab', 10, 2);
+
+function bp_wc_vendors_buddyforms_members_parent_tab( $parent_tab_slug, $form_slug ){
+	global $buddyforms;
+
+//	$options = bp_wc_vendors_get_options();
+
+	if( isset( $buddyforms[$form_slug] ) ){
+		if( isset( $buddyforms[$form_slug]['wc_vendor_integration'] ) ){
+			$parent_tab_slug = 'vendor-dashboard';
+		}
+	}
+
+	return $parent_tab_slug;
+
 }

@@ -58,6 +58,7 @@ function bp_wc_vendors_includes() {
 	}
 
 	include_once( dirname( __FILE__ ) . '/includes/functions.php' );
+	include_once( dirname( __FILE__ ) . '/includes/buddyforms.php' );
 	include_once( dirname( __FILE__ ) . '/includes/bp-wc-vendors.php' );
 
 	if ( is_admin() ) {

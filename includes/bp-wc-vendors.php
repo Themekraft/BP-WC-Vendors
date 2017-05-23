@@ -5,12 +5,8 @@ add_action( 'bp_member_header_actions', 'bp_wc_vendors_bp_member_header_actions'
 function bp_wc_vendors_bp_member_header_actions() {
 
 	$bp_wc_vendors_options = bp_wc_vendors_get_options();
-	$bp_wc_vendors_general  = $bp_wc_vendors_options['general'];
-	$bp_wc_vendors_products = $bp_wc_vendors_options['products'];
-	$bp_wc_vendors_links    = $bp_wc_vendors_options['links'];
 
-
-	if ( isset( $bp_wc_vendors_products['visit_store_disabled'] ) ) {
+	if ( isset( $bp_wc_vendors_options['visit_store_disabled'] ) ) {
 		return;
 	}
 
@@ -38,16 +34,15 @@ add_action( 'wcv_after_main_header', 'bp_wc_vendors_after_vendor_store_title' );
 function bp_wc_vendors_after_vendor_store_title() {
 
 	$bp_wc_vendors_options = bp_wc_vendors_get_options();
-	$bp_wc_vendors_general[]  = $bp_wc_vendors_options['general'];
 
-	if ( isset( $bp_wc_vendors_general['view_profile_disabled'] ) ) {
+	if ( isset( $bp_wc_vendors_options['view_profile_disabled'] ) ) {
 		return;
 	}
 
 	$vendor_shop    = urldecode( get_query_var( 'vendor_shop' ) );
 	$wcv_profile_id = WCV_Vendors::get_vendor_id( $vendor_shop );
 	$profile_url    = bp_core_get_user_domain( $wcv_profile_id );
-	echo '<center><a href="' . $profile_url . '/profile/" class="button">View Profile</a></center>';
+	echo '<a href="' . $profile_url . '/profile/" class="button">View Profile</a>';
 }
 
 /* WC Vendors Pro - Adds a link to Profile on Single Product Pages */

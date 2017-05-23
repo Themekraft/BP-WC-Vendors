@@ -77,17 +77,18 @@ class BuddyForms_WC_Vendors_Component extends BP_Component {
 			'user_has_access'         => bp_is_my_profile()
 		);
 
+		$parent_slug = 'vendor-dashboard';
+
 		$sub_nav[] = array(
 			'name'            => $dashboard_page_title,
 			'slug'            => 'vendor-dashboard',
 			'class'           => 'test',
-			'parent_slug'     => 'vendor-dashboard',
-			'parent_url'      => bp_displayed_user_domain() . 'vendor-dashboard/',
+			'parent_slug'     => $parent_slug,
+			'parent_url'      => trailingslashit( bp_loggedin_user_domain() . $parent_slug ),
 			'item_css_id'     => 'vendor-dashboard',
 			'screen_function' => array( $this, 'bp_wc_vendors_screen_settings' ),
 			'user_has_access' => bp_is_my_profile()
 		);
-
 
 		if ( bp_wc_vendors_fs()->is_plan('professional', true) ) {
 			if ( ! isset( $bp_wc_vendors_options['tab_products_disabled'] ) && defined( 'WCV_PRO_VERSION' ) ) {
@@ -95,8 +96,8 @@ class BuddyForms_WC_Vendors_Component extends BP_Component {
 				$sub_nav[] = array(
 					'name'            => __( 'Products', 'wcvendors' ),
 					'slug'            => 'vendor-dashboard-products',
-					'parent_slug'     => 'vendor-dashboard',
-					'parent_url'      => bp_displayed_user_domain() . 'vendor-dashboard/',
+					'parent_slug'     => $parent_slug,
+					'parent_url'      => trailingslashit( bp_loggedin_user_domain() . $parent_slug ),
 					'item_css_id'     => 'vendor-dashboard',
 					'screen_function' => array( $this, 'bp_wc_vendors_screen_settings' ),
 					'user_has_access' => bp_is_my_profile()
@@ -108,8 +109,8 @@ class BuddyForms_WC_Vendors_Component extends BP_Component {
 			$sub_nav[] = array(
 				'name'            => __( 'Orders', 'wcvendors' ),
 				'slug'            => 'vendor-dashboard-orders',
-				'parent_slug'     => 'vendor-dashboard',
-				'parent_url'      => bp_displayed_user_domain() . 'vendor-dashboard/',
+				'parent_slug'     => $parent_slug,
+				'parent_url'      => trailingslashit( bp_loggedin_user_domain() . $parent_slug ),
 				'item_css_id'     => 'vendor-dashboard',
 				'screen_function' => array( $this, 'bp_wc_vendors_screen_settings' ),
 				'user_has_access' => bp_is_my_profile()
@@ -120,8 +121,8 @@ class BuddyForms_WC_Vendors_Component extends BP_Component {
 			$sub_nav[] = array(
 				'name'            => __( 'Settings', 'wcvendors' ),
 				'slug'            => 'vendor-dashboard-settings',
-				'parent_slug'     => 'vendor-dashboard',
-				'parent_url'      => bp_displayed_user_domain() . 'vendor-dashboard/',
+				'parent_slug'     => $parent_slug,
+				'parent_url'      => trailingslashit( bp_loggedin_user_domain() . $parent_slug ),
 				'item_css_id'     => 'vendor-dashboard',
 				'screen_function' => array( $this, 'bp_wc_vendors_screen_settings' ),
 				'user_has_access' => bp_is_my_profile()
@@ -133,8 +134,8 @@ class BuddyForms_WC_Vendors_Component extends BP_Component {
 				$sub_nav[] = array(
 					'name'            => __( 'Ratings', 'wcvendors' ),
 					'slug'            => 'vendor-dashboard-ratings',
-					'parent_slug'     => 'vendor-dashboard',
-					'parent_url'      => bp_displayed_user_domain() . 'vendor-dashboard/',
+					'parent_slug'     => $parent_slug,
+					'parent_url'      => trailingslashit( bp_loggedin_user_domain() . $parent_slug ),
 					'item_css_id'     => 'vendor-dashboard',
 					'screen_function' => array( $this, 'bp_wc_vendors_screen_settings' ),
 					'user_has_access' => bp_is_my_profile()
@@ -146,8 +147,8 @@ class BuddyForms_WC_Vendors_Component extends BP_Component {
 				$sub_nav[] = array(
 					'name'            => __( 'Coupons', 'wcvendors' ),
 					'slug'            => 'vendor-dashboard-coupons',
-					'parent_slug'     => 'vendor-dashboard',
-					'parent_url'      => bp_displayed_user_domain() . 'vendor-dashboard/',
+					'parent_slug'     => $parent_slug,
+					'parent_url'      => trailingslashit( bp_loggedin_user_domain() . $parent_slug ),
 					'item_css_id'     => 'vendor-dashboard',
 					'screen_function' => array( $this, 'bp_wc_vendors_screen_settings' ),
 					'user_has_access' => bp_is_my_profile()
@@ -155,6 +156,10 @@ class BuddyForms_WC_Vendors_Component extends BP_Component {
 			}
 		}
 		parent::setup_nav( $main_nav, $sub_nav );
+
+//		foreach ( $sub_nav as $nav ){
+//			bp_core_new_subnav_item($nav);
+//		}
 
 	}
 
