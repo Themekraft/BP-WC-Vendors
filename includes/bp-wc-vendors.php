@@ -4,15 +4,26 @@
 add_action( 'bp_member_header_actions', 'bp_wc_vendors_bp_member_header_actions' );
 function bp_wc_vendors_bp_member_header_actions() {
 
-	$bp_wc_vendors_options = get_option( 'bp_wc_vendors_options' );
-	if ( isset( $bp_wc_vendors_options['visit_store_disabled'] ) ) {
+	$bp_wc_vendors_options = bp_wc_vendors_get_options();
+	$bp_wc_vendors_general  = $bp_wc_vendors_options['general'];
+	$bp_wc_vendors_products = $bp_wc_vendors_options['products'];
+	$bp_wc_vendors_links    = $bp_wc_vendors_options['links'];
+
+
+	if ( isset( $bp_wc_vendors_products['visit_store_disabled'] ) ) {
 		return;
 	}
 
 	$wcv_profile_id   = bp_displayed_user_id();
 	$wcv_profile_info = get_userdata( bp_displayed_user_id() );
 	$wcv_profile_role = implode( $wcv_profile_info->roles );
-	$store_url        = WCVendors_Pro_Vendor_Controller::get_vendor_store_url( $wcv_profile_id );
+
+	if( class_exists('WCVendors_Pro_Vendor_Controller' ) ){
+		$store_url        = WCVendors_Pro_Vendor_Controller::get_vendor_store_url( $wcv_profile_id );
+	} else {
+		$store_url        = WCV_Vendors::get_vendor_shop_page( $wcv_profile_id );
+	}
+
 	$sold_by          = '<div class="generic-button" id="post-mention"><a href="' . $store_url . '" class="send-message">Visit Store</a></div>';
 
 	if ( isset($wcv_profile_info->roles[0]) && $wcv_profile_info->roles[0] == "vendor" ) {
@@ -26,8 +37,10 @@ function bp_wc_vendors_bp_member_header_actions() {
 add_action( 'wcv_after_main_header', 'bp_wc_vendors_after_vendor_store_title' );
 function bp_wc_vendors_after_vendor_store_title() {
 
-	$bp_wc_vendors_options = get_option( 'bp_wc_vendors_options' );
-	if ( isset( $bp_wc_vendors_options['view_profile_disabled'] ) ) {
+	$bp_wc_vendors_options = bp_wc_vendors_get_options();
+	$bp_wc_vendors_general[]  = $bp_wc_vendors_options['general'];
+
+	if ( isset( $bp_wc_vendors_general['view_profile_disabled'] ) ) {
 		return;
 	}
 
@@ -40,7 +53,7 @@ function bp_wc_vendors_after_vendor_store_title() {
 /* WC Vendors Pro - Adds a link to Profile on Single Product Pages */
 add_action( 'woocommerce_product_meta_start', 'bp_wc_vendors_link_woocommerce_product_meta_start' );
 function bp_wc_vendors_link_woocommerce_product_meta_start() {
-	$bp_wc_vendors_options = get_option( 'bp_wc_vendors_options' );
+	$bp_wc_vendors_options = bp_wc_vendors_get_options();
 	if ( isset( $bp_wc_vendors_options['view_profile_disabled'] ) ) {
 		return;
 	}
@@ -57,7 +70,7 @@ function bp_wc_vendors_bpmail_woocommerce_product_meta_start() {
 		return;
 	}
 
-	$bp_wc_vendors_options = get_option( 'bp_wc_vendors_options' );
+	$bp_wc_vendors_options = bp_wc_vendors_get_options();
 	if ( isset( $bp_wc_vendors_options['contact_vendor_disabled'] ) ) {
 		return;
 	}
@@ -75,7 +88,7 @@ function bp_wc_vendors_bpmail_woocommerce_product_meta_start() {
 add_action( 'init', 'bp_wc_vendors_disable_sold_by', 9999 );
 function bp_wc_vendors_disable_sold_by() {
 
-	$bp_wc_vendors_options = get_option( 'bp_wc_vendors_options' );
+	$bp_wc_vendors_options = bp_wc_vendors_get_options();
 	if ( ! isset( $bp_wc_vendors_options['sold_by_disabled'] ) ) {
 		return;
 	}
@@ -94,3 +107,4 @@ function bp_wc_vendors_buddyforms_the_loop_actions( $post_id ) {
 	}
 
 }
+

@@ -57,8 +57,13 @@ class BuddyForms_WC_Vendors_Component extends BP_Component {
 			return;
 		}
 
-		$bp_wc_vendors_options = get_option( 'bp_wc_vendors_options' );
-		$dashboard_page_id     = WCVendors_Pro::get_option( 'dashboard_page_id' );
+		$bp_wc_vendors_options = bp_wc_vendors_get_options();
+
+		if( class_exists('WCVendors_Pro') ){
+			$dashboard_page_id = WCVendors_Pro::get_option( 'dashboard_page_id' );
+		} else{
+			$dashboard_page_id = WC_Vendors::$pv_options->get_option( 'vendor_dashboard_page' );
+		}
 
 		$dashboard_page_title = get_the_title( $dashboard_page_id );
 
@@ -75,6 +80,7 @@ class BuddyForms_WC_Vendors_Component extends BP_Component {
 		$sub_nav[] = array(
 			'name'            => $dashboard_page_title,
 			'slug'            => 'vendor-dashboard',
+			'class'           => 'test',
 			'parent_slug'     => 'vendor-dashboard',
 			'parent_url'      => bp_displayed_user_domain() . 'vendor-dashboard/',
 			'item_css_id'     => 'vendor-dashboard',
@@ -82,16 +88,20 @@ class BuddyForms_WC_Vendors_Component extends BP_Component {
 			'user_has_access' => bp_is_my_profile()
 		);
 
-		if ( ! isset( $bp_wc_vendors_options['tab_products_disabled'] ) ) {
-			$sub_nav[] = array(
-				'name'            => __( 'Products', 'wcvendors' ),
-				'slug'            => 'vendor-dashboard-products',
-				'parent_slug'     => 'vendor-dashboard',
-				'parent_url'      => bp_displayed_user_domain() . 'vendor-dashboard/',
-				'item_css_id'     => 'vendor-dashboard',
-				'screen_function' => array( $this, 'bp_wc_vendors_screen_settings' ),
-				'user_has_access' => bp_is_my_profile()
-			);
+
+		if ( bp_wc_vendors_fs()->is_plan('professional', true) ) {
+			if ( ! isset( $bp_wc_vendors_options['tab_products_disabled'] ) && defined( 'WCV_PRO_VERSION' ) ) {
+
+				$sub_nav[] = array(
+					'name'            => __( 'Products', 'wcvendors' ),
+					'slug'            => 'vendor-dashboard-products',
+					'parent_slug'     => 'vendor-dashboard',
+					'parent_url'      => bp_displayed_user_domain() . 'vendor-dashboard/',
+					'item_css_id'     => 'vendor-dashboard',
+					'screen_function' => array( $this, 'bp_wc_vendors_screen_settings' ),
+					'user_has_access' => bp_is_my_profile()
+				);
+			}
 		}
 
 		if ( ! isset( $bp_wc_vendors_options['tab_orders_disabled'] ) ) {
@@ -118,30 +128,32 @@ class BuddyForms_WC_Vendors_Component extends BP_Component {
 			);
 		}
 
-		if ( ! isset( $bp_wc_vendors_options['tab_ratings_disabled'] ) ) {
-			$sub_nav[] = array(
-				'name'            => __( 'Ratings', 'wcvendors' ),
-				'slug'            => 'vendor-dashboard-ratings',
-				'parent_slug'     => 'vendor-dashboard',
-				'parent_url'      => bp_displayed_user_domain() . 'vendor-dashboard/',
-				'item_css_id'     => 'vendor-dashboard',
-				'screen_function' => array( $this, 'bp_wc_vendors_screen_settings' ),
-				'user_has_access' => bp_is_my_profile()
-			);
+		if ( bp_wc_vendors_fs()->is_plan('professional', true) ) {
+			if ( ! isset( $bp_wc_vendors_options['tab_ratings_disabled'] ) && defined( 'WCV_PRO_VERSION') ) {
+				$sub_nav[] = array(
+					'name'            => __( 'Ratings', 'wcvendors' ),
+					'slug'            => 'vendor-dashboard-ratings',
+					'parent_slug'     => 'vendor-dashboard',
+					'parent_url'      => bp_displayed_user_domain() . 'vendor-dashboard/',
+					'item_css_id'     => 'vendor-dashboard',
+					'screen_function' => array( $this, 'bp_wc_vendors_screen_settings' ),
+					'user_has_access' => bp_is_my_profile()
+				);
+			}
 		}
-
-		if ( ! isset( $bp_wc_vendors_options['tab_coupons_disabled'] ) ) {
-			$sub_nav[] = array(
-				'name'            => __( 'Coupons', 'wcvendors' ),
-				'slug'            => 'vendor-dashboard-coupons',
-				'parent_slug'     => 'vendor-dashboard',
-				'parent_url'      => bp_displayed_user_domain() . 'vendor-dashboard/',
-				'item_css_id'     => 'vendor-dashboard',
-				'screen_function' => array( $this, 'bp_wc_vendors_screen_settings' ),
-				'user_has_access' => bp_is_my_profile()
-			);
+		if ( bp_wc_vendors_fs()->is_plan('professional', true) && defined( 'WCV_PRO_VERSION' ) ) {
+			if ( ! isset( $bp_wc_vendors_options['tab_coupons_disabled'] ) ) {
+				$sub_nav[] = array(
+					'name'            => __( 'Coupons', 'wcvendors' ),
+					'slug'            => 'vendor-dashboard-coupons',
+					'parent_slug'     => 'vendor-dashboard',
+					'parent_url'      => bp_displayed_user_domain() . 'vendor-dashboard/',
+					'item_css_id'     => 'vendor-dashboard',
+					'screen_function' => array( $this, 'bp_wc_vendors_screen_settings' ),
+					'user_has_access' => bp_is_my_profile()
+				);
+			}
 		}
-
 		parent::setup_nav( $main_nav, $sub_nav );
 
 	}
@@ -195,8 +207,16 @@ class BuddyForms_WC_Vendors_Component extends BP_Component {
 		$action = get_query_var( 'action' );
 		$id     = get_query_var( 'object_id' );
 
-		$bp_wc_vendors_dashboard = new BP_WCVendors_Pro_Dashboard( 'wcvendors-pro', WCV_PRO_VERSION, false );
-		$bp_wc_vendors_dashboard->load_page( $type, $action, $id );
+
+
+
+		if( class_exists('BP_WCVendors_Pro_Dashboard' ) ){
+			$bp_wc_vendors_dashboard = new BP_WCVendors_Pro_Dashboard( 'wcvendors-pro', WCV_PRO_VERSION, false );
+			$bp_wc_vendors_dashboard->load_page( $type, $action, $id );
+		} else {
+
+		}
+
 
 		// bp_wc_vendors_locate_template('buddyforms/members/members-post-display.php');
 		// bp_wc_vendors_locate_template('buddyforms/members/members-post-create.php');
@@ -205,15 +225,25 @@ class BuddyForms_WC_Vendors_Component extends BP_Component {
 
 	public function bp_wc_vendors_orders() {
 
-		$bp_wc_vendors_dashboard = new BP_WCVendors_Pro_Dashboard( 'wcvendors-pro', WCV_PRO_VERSION, false );
-		$bp_wc_vendors_dashboard->load_order_page();
+		if( class_exists('BP_WCVendors_Pro_Dashboard' ) ){
+			$bp_wc_vendors_dashboard = new BP_WCVendors_Pro_Dashboard( 'wcvendors-pro', WCV_PRO_VERSION, false );
+			$bp_wc_vendors_dashboard->load_order_page();
+		} else {
+			echo do_shortcode( '[wcv_orders]' );
+		}
+
+
 
 	}
 
 	public function bp_wc_vendors_settings() {
 
-		$bp_wc_vendors_dashboard = new BP_WCVendors_Pro_Dashboard( 'wcvendors-pro', WCV_PRO_VERSION, false );
-		$bp_wc_vendors_dashboard->load_settings_page();
+		if( class_exists('BP_WCVendors_Pro_Dashboard' ) ){
+			$bp_wc_vendors_dashboard = new BP_WCVendors_Pro_Dashboard( 'wcvendors-pro', WCV_PRO_VERSION, false );
+			$bp_wc_vendors_dashboard->load_settings_page();
+		} else {
+			echo do_shortcode( '[wcv_shop_settings]' );
+		}
 
 	}
 
@@ -249,8 +279,12 @@ class BuddyForms_WC_Vendors_Component extends BP_Component {
 
 	public function bp_wc_vendors_dashboard() {
 
-		$bp_wc_vendors_dashboard = new BP_WCVendors_Pro_Dashboard( 'wcvendors-pro', WCV_PRO_VERSION, false );
-		$bp_wc_vendors_dashboard->load_page( 'dashboard' );
+		if( class_exists('BP_WCVendors_Pro_Dashboard' ) ){
+			$bp_wc_vendors_dashboard = new BP_WCVendors_Pro_Dashboard( 'wcvendors-pro', WCV_PRO_VERSION, false );
+			$bp_wc_vendors_dashboard->load_page( 'dashboard' );
+		} else {
+			echo do_shortcode( '[wcv_vendor_dashboard]' );
+		}
 
 	}
 
