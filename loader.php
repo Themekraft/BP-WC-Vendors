@@ -162,8 +162,8 @@ function bp_wc_vendors_fs() {
 			'public_key'          => 'pk_0b28a902c5241cbcb765a554c92cf',
 			'is_premium'          => true,
 			// If your plugin is a serviceware, set this option to false.
-			'has_premium_version' => false,
-			'has_addons'          => false,
+			'has_premium_version' => true,
+			'has_addons'          => true,
 			'has_paid_plans'      => true,
 			'menu'                => array(
 				'slug'           => 'bp_wc_vendors_screen',

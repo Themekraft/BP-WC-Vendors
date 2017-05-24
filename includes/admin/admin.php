@@ -103,12 +103,12 @@ function bp_wc_vendors_screen() {
                         <table class="form-table">
                             <tr>
                                 <th><label for="">Default Tabs</label></th>
-                                <td><p>You are using the free version. There are no options for the Free Dashboard. All Tabs get included</p>
+                                <td><p>You are using the free version. There are no options for the Free Dashboard. All Tabs get included<br>
+
+                                       Important:  You are using WC Vendors Pro Version you need at least the BP WC Vendors Professional Plan fro the integration to work.</p>
 
 	                                <?php isset( $bp_wc_vendors_options['general']['tab_settings_disabled'] ) ? $tab_settings_disabled = $bp_wc_vendors_options['general']['tab_settings_disabled'] : $tab_settings_disabled = 0; ?>
-                                    <p <?php bp_wc_vendors() ?>><input
-                                                name='bp_wc_vendors_options[general][tab_settings_disabled]' type='checkbox'
-                                                value='1' <?php checked( $tab_settings_disabled, 1 ); ?> /> <b>Turn off "Settings" tab </b>
+                                    <p <?php bp_wcv_pro() ?>><input <?php bp_wcv_disabled() ?> name='bp_wc_vendors_options[general][tab_settings_disabled]' type='checkbox' value='1' <?php checked( $tab_settings_disabled, 1 ); ?> /> <b>Turn off "Settings" tab </b>
                                     </p>
                                 </td>
                             </tr>
@@ -117,32 +117,23 @@ function bp_wc_vendors_screen() {
                                 <td>
 
 	                                <?php $tab_orders_disabled = isset( $bp_wc_vendors_options['general']['tab_orders_disabled'] ) ? $bp_wc_vendors_options['general']['tab_orders_disabled'] : 0; ?>
-                                    <p <?php bp_wc_vendors() ?>><input name='bp_wc_vendors_options[general][tab_orders_disabled]'
-                                                                       type='checkbox'
-                                                                       value='1' <?php checked( $tab_orders_disabled, 1 ); ?> />
+                                    <p <?php bp_wcv_pro() ?>><input name='bp_wc_vendors_options[general][tab_orders_disabled]' type='checkbox' <?php bp_wcv_disabled() ?> value='1' <?php checked( $tab_orders_disabled, 1 ); ?> />
                                         <b>Turn off "Orders" tab </b>
                                     </p>
 
 									<?php $tab_products_disabled =  isset( $bp_wc_vendors_options['general']['tab_products_disabled'] ) ? $bp_wc_vendors_options['general']['tab_products_disabled'] : 0; ?>
-                                    <p <?php bp_wc_vendors() ?>><input
-                                                name='bp_wc_vendors_options[general][tab_products_disabled]'
-                                                type='checkbox'
-                                                value='1' <?php checked( $tab_products_disabled, 1 ); ?> />
+                                    <p <?php bp_wcv_pro() ?>><input name='bp_wc_vendors_options[general][tab_products_disabled]' type='checkbox' <?php bp_wcv_disabled() ?> value='1' <?php checked( $tab_products_disabled, 1 ); ?> />
                                         <b>Turn off "Products" tab </b>
                                     </p>
 
 									<?php $tab_ratings_disabled = isset( $bp_wc_vendors_options['general']['tab_ratings_disabled'] ) ? $bp_wc_vendors_options['general']['tab_ratings_disabled'] : 0; ?>
-                                    <p <?php bp_wc_vendors() ?>><input
-                                                name='bp_wc_vendors_options[general][tab_ratings_disabled]' type='checkbox'
-                                                value='1' <?php checked( $tab_ratings_disabled, 1 ); ?> />
+                                    <p <?php bp_wcv_pro() ?>><input name='bp_wc_vendors_options[general][tab_ratings_disabled]' type='checkbox' <?php bp_wcv_disabled() ?> value='1' <?php checked( $tab_ratings_disabled, 1 ); ?> />
                                         <b>Turn off "Ratings" tab </b>
                                     </p>
 
 									<?php $tab_coupons_disabled = isset( $bp_wc_vendors_options['general']['tab_coupons_disabled'] ) ? $bp_wc_vendors_options['general']['tab_coupons_disabled'] : 0; ?>
-                                    <p <?php bp_wc_vendors() ?>><input
-                                                name='bp_wc_vendors_options[general][tab_coupons_disabled]' type='checkbox'
-                                                value='1' <?php checked( $tab_coupons_disabled, 1 ); ?> />
-                                        <b>Turn off"Coupons" tab </b>
+                                    <p <?php bp_wcv_pro() ?>><input name='bp_wc_vendors_options[general][tab_coupons_disabled]' type='checkbox' <?php bp_wcv_disabled() ?> value='1' <?php checked( $tab_coupons_disabled, 1 ); ?> />
+                                        <b>Turn off "Coupons" tab </b>
                                     </p>
 
                                 </td>
@@ -266,7 +257,8 @@ function bp_wc_vendors_screen() {
 	<?php
 }
 
-function bp_wc_vendors() {
+function bp_wcv_pro() {
+
 	$class = 'class="bp-wc-vendors-disabled"';
 
 	if ( bp_wc_vendors_fs()->is_plan( 'professional' ) ) {
@@ -274,4 +266,14 @@ function bp_wc_vendors() {
 	}
 
 	echo $class;
+}
+
+function bp_wcv_disabled() {
+	$disabled = 'disabled';
+
+	if ( bp_wc_vendors_fs()->is_plan( 'professional' ) ) {
+		$disabled = "";
+	}
+
+	echo $disabled;
 }

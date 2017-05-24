@@ -157,10 +157,6 @@ class BuddyForms_WC_Vendors_Component extends BP_Component {
 		}
 		parent::setup_nav( $main_nav, $sub_nav );
 
-//		foreach ( $sub_nav as $nav ){
-//			bp_core_new_subnav_item($nav);
-//		}
-
 	}
 
 	public function bp_wc_vendors_screen_settings() {

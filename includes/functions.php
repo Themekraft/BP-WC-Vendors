@@ -201,7 +201,8 @@ function bp_wc_vendors_woocommerce_before_template_part($located, $template_name
 	return $located;
 }
 
- add_filter( 'buddyforms_members_parent_tab', 'bp_wc_vendors_buddyforms_members_parent_tab', 10, 2);
+
+add_filter( 'buddyforms_members_parent_tab', 'bp_wc_vendors_buddyforms_members_parent_tab', 10, 2);
 
 function bp_wc_vendors_buddyforms_members_parent_tab( $parent_tab_slug, $form_slug ){
 	global $buddyforms;
@@ -217,3 +218,23 @@ function bp_wc_vendors_buddyforms_members_parent_tab( $parent_tab_slug, $form_sl
 	return $parent_tab_slug;
 
 }
+
+
+
+add_filter( 'buddyforms_members_parent_setup_nav', 'bp_wcv_buddyforms_members_parent_setup_nav', 10, 2);
+
+function bp_wcv_buddyforms_members_parent_setup_nav( $parent, $form_slug ){
+	global $buddyforms;
+
+//	$options = bp_wc_vendors_get_options();
+
+	if( isset( $buddyforms[$form_slug] ) ){
+		if( isset( $buddyforms[$form_slug]['wc_vendor_integration'] ) ){
+			$parent = false;
+		}
+	}
+
+	return $parent;
+
+}
+
