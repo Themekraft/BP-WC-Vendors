@@ -29,66 +29,137 @@
  */
 
 
-// Include all needed files
-add_action( 'init', 'bp_wc_vendors_includes', 10 );
-function bp_wc_vendors_includes() {
+class BP_WC_Vendors {
 
-//	if ( ! defined( 'WCV_PRO_VERSION' ) ) {
-//		return;
-//	}
+	/**
+	 * @var string
+	 */
+	public $version = '1.1';
 
-	if ( ! defined( 'BP_VERSION' ) ) {
-		return;
+	/**
+	 * Initiate the class
+	 *
+	 * @package
+	 * @since 0.1
+	 */
+	public function __construct() {
+
+		$this->load_constants();
+
+		add_action( 'init', array( $this, 'includes' ), 4, 1 );
+		add_action( 'plugins_loaded', array( $this, 'load_plugin_textdomain' ) );
+		add_action( 'admin_enqueue_scripts', array( $this, 'bp_wcv_admin_js' ), 2, 10 );
+		add_action( 'wp_enqueue_scripts', array( $this, 'bp_wcv_front_js_css' ), 2, 1 );
+
+		// Load the BuddyPress needed files and create the BP WC Vendors Component
+		add_action( 'bp_setup_components', array( $this, 'bp_wc_vendors_bp_init' ), 10 );
+
 	}
 
-	if ( ! defined( 'BP_WCV_PLUGIN_URL' ) ) {
-		define( 'BP_WCV_PLUGIN_URL', plugins_url( '/', __FILE__ ) );
+	/**
+	 * Defines constants needed throughout the plugin.
+	 *
+	 * These constants can be overridden in bp-custom.php or wp-config.php.
+	 *
+	 * @package bp_wcv
+	 * @since 0.1
+	 */
+	public function load_constants() {
+
+		/**
+		 * Define the plugin version
+		 */
+		define( 'BP_WCV_VERSION', $this->version );
+
+		if ( ! defined( 'BP_WCV_PLUGIN_URL' ) ) {
+			define( 'BP_WCV_PLUGIN_URL', plugins_url( '/', __FILE__ ) );
+		}
+
+		if ( ! defined( 'BP_WCV_INSTALL_PATH' ) ) {
+			define( 'BP_WCV_INSTALL_PATH', dirname( __FILE__ ) . '/' );
+		}
+
+		if ( ! defined( 'BP_WCV_INCLUDES_PATH' ) ) {
+			define( 'BP_WCV_INCLUDES_PATH', BP_WCV_INSTALL_PATH . 'includes/' );
+		}
+
+		if ( ! defined( 'BP_WCV_TEMPLATE_PATH' ) ) {
+			define( 'BP_WCV_TEMPLATE_PATH', BP_WCV_INSTALL_PATH . 'templates/' );
+		}
+
 	}
 
-	if ( ! defined( 'BP_WCV_INSTALL_PATH' ) ) {
-		define( 'BP_WCV_INSTALL_PATH', dirname( __FILE__ ) . '/' );
+	/**
+	 * Include files needed by BuddyForms
+	 *
+	 * @package bp_wcv
+	 * @since 0.1
+	 */
+	public function includes() {
+
+		include_once( dirname( __FILE__ ) . '/includes/functions.php' );
+		include_once( dirname( __FILE__ ) . '/includes/buddyforms.php' );
+		include_once( dirname( __FILE__ ) . '/includes/bp-wc-vendors.php' );
+
+		if ( is_admin() ) {
+			include_once( dirname( __FILE__ ) . '/includes/admin/admin.php' );
+			include_once( dirname( __FILE__ ) . '/includes/admin/welcome-screen.php' );
+		}
+
 	}
 
-	if ( ! defined( 'BP_WCV_INCLUDES_PATH' ) ) {
-		define( 'BP_WCV_INCLUDES_PATH', BP_WCV_INSTALL_PATH . 'includes/' );
+	/**
+	 * Load the textdomain for the plugin
+	 *
+	 * @package bp_wcv
+	 * @since 0.1
+	 */
+	public function load_plugin_textdomain() {
+		load_plugin_textdomain( 'bp-wcv', false, dirname( plugin_basename( __FILE__ ) ) . '/languages/' );
 	}
 
-	if ( ! defined( 'BP_WCV_TEMPLATE_PATH' ) ) {
-		define( 'BP_WCV_TEMPLATE_PATH', BP_WCV_INSTALL_PATH . 'templates/' );
+	/**
+	 * Enqueue the needed CSS for the admin screen
+	 *
+	 * @package bp_wcv
+	 * @since 0.1
+	 */
+	function bp_wcv_admin_style( $hook_suffix ) {
 	}
 
-	include_once( dirname( __FILE__ ) . '/includes/functions.php' );
-	include_once( dirname( __FILE__ ) . '/includes/buddyforms.php' );
-	include_once( dirname( __FILE__ ) . '/includes/bp-wc-vendors.php' );
+	/**
+	 * Enqueue the needed JS for the admin screen
+	 *
+	 * @since 1.1
+	 */
+	function bp_wcv_admin_js( $hook_suffix ) {
 
-	if ( is_admin() ) {
-		include_once( dirname( __FILE__ ) . '/includes/admin/admin.php' );
+		if($hook_suffix != 'toplevel_page_bp_wc_vendors_screen') {
+			return;
+		}
+		wp_enqueue_style( 'custom_wp_admin_css', plugins_url('/assets/admin/css/admin.css', __FILE__) );
+
 	}
-}
 
-// Load the BuddyPress needed files and create the BP WC Vendors Component
-add_action( 'bp_setup_components', 'bp_wc_vendors_bp_init', 10 );
-function bp_wc_vendors_bp_init() {
-	global $bp;
+	/**
+	 * Enqueue the needed JS for the frontend
+	 *
+	 * @since 0.1
+	 */
+	function bp_wcv_front_js_css() {
+	}
 
-//	if ( defined( 'WCV_PRO_VERSION' ) ) {
+	function bp_wc_vendors_bp_init() {
+		global $bp;
+
 		require( dirname( __FILE__ ) . '/includes/bp-wc-vendors-members-component.php' );
 		$bp->bp_wc_vendors = new BuddyForms_WC_Vendors_Component();
-//	} else {
 
-//	}
-
-}
-
-add_action( 'admin_enqueue_scripts', 'bp_wc_vendors_wp_admin_style' );
-function bp_wc_vendors_wp_admin_style($hook) {
-
-	if($hook != 'toplevel_page_bp_wc_vendors_screen') {
-		return;
 	}
-	wp_enqueue_style( 'custom_wp_admin_css', plugins_url('/assets/admin/css/admin.css', __FILE__) );
 
 }
+
+$GLOBALS['BP_WC_Vendors'] = new BP_WC_Vendors();
 
 
 //
@@ -114,6 +185,20 @@ add_action( 'init', function () {
 			'required' => true,
 		);
 
+		if ( ! defined( 'BUDDYFORMS_PRO_VERSION' ) ) {
+			$plugins['buddyforms'] = array(
+				'name'      => 'BuddyForms',
+				'slug'      => 'buddyforms',
+				'required'  => false,
+			);
+		}
+
+		$plugins['buddyforms-members'] = array(
+			'name'     => 'BuddyForms Members',
+			'slug'     => 'buddyforms-members',
+			'required' => false,
+		);
+
 		$plugins['woocommerce'] = array(
 			'name'     => 'WooCommerce',
 			'slug'     => 'woocommerce',
@@ -131,11 +216,11 @@ add_action( 'init', function () {
 			// Unique ID for hashing notices for multiple instances of TGMPA.
 			'parent_slug'  => 'plugins.php',
 			// Parent menu slug.
-			'capability'   => 'manage_options',
+			'capability'   => '^',
 			// Capability needed to view plugin install page, should be a capability associated with the parent menu used.
 			'has_notices'  => true,
 			// Show admin notices or not.
-			'dismissable'  => false,
+			'dismissable'  => true,
 			// If false, a user cannot dismiss the nag message.
 			'is_automatic' => true,
 			// Automatically activate plugins after installation or not.
@@ -144,8 +229,8 @@ add_action( 'init', function () {
 		// Call the tgmpa function to register the required plugins
 		tgmpa( $plugins, $config );
 
-	} );
-}, 1, 1 );
+	}  );
+}, 0, 1 );
 
 // Create a helper function for easy SDK access.
 function bp_wc_vendors_fs() {
@@ -168,6 +253,7 @@ function bp_wc_vendors_fs() {
 			'menu'                => array(
 				'slug'           => 'bp_wc_vendors_screen',
 				'override_exact' => true,
+				'first-path'     => 'admin.php?page=bp_wcv_welcome_screen',
 				'support'        => false,
 			),
 			// Set the SDK to work in a sandbox mode (for development & testing).
@@ -183,3 +269,11 @@ function bp_wc_vendors_fs() {
 bp_wc_vendors_fs();
 // Signal that SDK was initiated.
 do_action( 'bp_wc_vendors_fs_loaded' );
+
+function bp_wc_vendors_fs_settings_url() {
+	return admin_url( 'admin.php?page=bp_wc_vendors_screen' );
+}
+
+bp_wc_vendors_fs()->add_filter( 'connect_url', 'bp_wc_vendors_fs_settings_url' );
+bp_wc_vendors_fs()->add_filter( 'after_skip_url', 'bp_wc_vendors_fs_settings_url' );
+bp_wc_vendors_fs()->add_filter( 'after_connect_url', 'bp_wc_vendors_fs_settings_url' );

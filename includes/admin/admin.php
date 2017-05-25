@@ -2,7 +2,7 @@
 // Add the option page to the BP WC Vendors menu
 add_action( 'admin_menu', 'bp_wc_vendors_add_menu' );
 function bp_wc_vendors_add_menu() {
-	$settings_page = add_menu_page( 'BP WC Vendors', 'BP WC Vendors', 'manage_options', 'bp_wc_vendors_screen', 'bp_wc_vendors_screen' );
+	$settings_page = add_menu_page( 'BP WC Vendors', 'BP WC Vendors', 'manage_options', 'bp_wc_vendors_screen', 'bp_wc_vendors_screen_function' );
 	add_action( "load-{$settings_page}", 'bp_wc_vendors_tabs_submit' );
 }
 
@@ -47,7 +47,7 @@ function bp_wc_vendors_tabs_submit( $get ) {
  * @since 1.3
  */
 
-function bp_wc_vendors_screen() {
+function bp_wc_vendors_screen_function() {
 	global $pagenow, $buddyforms, $current;
 
 	$bp_wc_vendors_options = get_option( 'bp_wc_vendors_options' );
