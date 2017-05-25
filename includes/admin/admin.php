@@ -14,6 +14,7 @@ function bp_wc_vendors_tabs_submit( $get ) {
 	$current = isset( $_POST['bp_wc_vendors_options_products_submit'] ) ? 'products' : $current;
 	$current = isset( $_POST['bp_wc_vendors_options_links_submit'] ) ? 'links' : $current;
 	$current = isset( $_POST['bp_wc_vendors_options_redirects_submit'] ) ? 'redirects' : $current;
+	$current = isset( $_POST['bp_wc_vendors_options_signup_submit'] ) ? 'signup' : $current;
 
 	if( empty( $current ) ){
 		return;
@@ -67,7 +68,7 @@ function bp_wc_vendors_screen_function() {
 
 		<?php
 
-		$tabs = array( 'general' => 'Dashboard Tabs', 'products' => 'Product Creation', 'links' => 'Deactivate Links', 'redirects' => 'Redirects' );
+		$tabs = array( 'general' => 'Dashboard Tabs', 'products' => 'Product Creation', 'links' => 'Deactivate Links', 'redirects' => 'Redirects', 'signup' => 'Sign up Forms' );
 
 		$tabs = apply_filters( 'buddyforms_admin_tabs', $tabs );
 
@@ -246,6 +247,30 @@ function bp_wc_vendors_screen_function() {
                             </tr>
                         </table>
                         <input type="submit" value="Save" name="bp_wc_vendors_options_redirects_submit" class="button">
+						<?php
+						break;
+					case 'signup': ?>
+                        <table class="form-table">
+                            <tr>
+                                <th><label for="">Sign Up Forms</label></th>
+                                <td>
+                                    <p>Use BuddyForms to create Sign up forms and ask during sign up for all relevant data. Automatically assign new users vendor rights and sync all data with WordPress and BuddyPress</p>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th><label for="">Become a Vendor Forms</label></th>
+                                <td>
+                                    <p>Use a Shortcode in a Page </p>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th><label for="">Add to My Account for non Vendors</label></th>
+                                <td>
+                                    <p>If you integrate the My Account into BuddyPress It make sense to Integrate the Become a vendor into the My Account aria so its all on the correct place.</p>
+                                </td>
+                            </tr>
+                        </table>
+                        <input type="submit" value="Save" name="bp_wc_vendors_options_signup_submit" class="button">
 						<?php
 						break;
 				}
