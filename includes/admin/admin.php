@@ -258,15 +258,45 @@ function bp_wc_vendors_screen_function() {
                                 </td>
                             </tr>
                             <tr>
-                                <th><label for="">Become a Vendor Forms</label></th>
+                                <th><label for="">Become a Vendor</label></th>
                                 <td>
-                                    <p>Use a Shortcode in a Page </p>
+                                    <p><b>Use Shortcodes</b></p>
+                                    <p>You can use the [bp_wcv_bav] Shortcode to display the default "Become a Vendor" Form in any Page.</p>
+
+                                    <p>To display a Registration/Login form for logged off user you need to create a new Registration form with BuddyForms.
+
+                                    Use the Shortcode generator to generate the correct shortcode.
+                                    The Shortcode will display the registration form for logged off users and the "Become a vendor" Form if logged in but not a Vendor.
+                                    </p>
+                                    <hr>
+
+                                    <p><b>Shortcode Generator</b></p>
+
+                                    <?php
+                                    if( isset( $buddyforms ) && is_array( $buddyforms ) ){
+	                                    echo '<select id="bp-wcv-form-select">';
+	                                    echo '<option value="none">Select a Registration Form to generate the Shortcode</option>';
+	                                    foreach ( $buddyforms as $form_slug => $form ){
+		                                    if( $form['form_type'] == 'registration' ){
+			                                    echo '<option value="' . $form['slug'] . '">' . $form['name'] . '</option>';
+		                                    }
+	                                    }
+	                                    echo '</select>';
+                                    }
+                                    ?>
+                                    <div style="display: none" id="bp-wc-vendors-shortcode-result"></div>
+
                                 </td>
                             </tr>
+
+
                             <tr>
                                 <th><label for="">Add to My Account for non Vendors</label></th>
                                 <td>
-                                    <p>If you integrate the My Account into BuddyPress It make sense to Integrate the Become a vendor into the My Account aria so its all on the correct place.</p>
+                                    <p>If you integrate the My Account into BuddyPress It make sense to Integrate the "Become a vendor" Form into the My Account (Shop Tab) so its all on the correct place.</p>
+                                    <p>To do so create a page and add the shortcode [bp_wcv_bav] as content. In the next step add this Page in the WC4BP Integrate Pages Settings as new Page.
+
+                                        This will add the "Become a Vendor Form to the Shop Tab as Sub Tab." </p>
                                 </td>
                             </tr>
                         </table>

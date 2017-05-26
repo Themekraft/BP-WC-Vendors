@@ -101,7 +101,7 @@ function bp_wcv_welcome_screen_content() {
 
 			<h1>Welcome to BP WC Vendors Version <?php echo BP_WCV_VERSION ?></h1>
 
-			<p class="about-text">Enjoy Groundbreaking New Features!</p>
+			<p class="about-text">The BuddyPress Marketplace - Enjoy Groundbreaking New Features!</p>
 
 			<h2 class="nav-tab-wrapper wp-clearfix">
 				<a href="about.php" class="nav-tab nav-tab-active">What’s New</a>
@@ -119,7 +119,7 @@ function bp_wcv_welcome_screen_content() {
 				</div>
 
                 <div class="xcol col-big">
-                    <h2>The final collection of Plugins for your Premium Marketplace</h2>
+                    <h2>The final collection of Plugins for your Premium Marketplace Bundled and Supported in one Plugin</h2>
                     <p class="lead">
                         With BuddyPress, WooCommerce + WC4BP, WC Vendor + BP WC Vendors and BuddyForms to create beautiful and intuitive Product Forms you have all tools to your hand you need to build the next outstanding Marketplace.
                     </p>

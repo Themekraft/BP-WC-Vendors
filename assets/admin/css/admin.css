@@ -21,3 +21,8 @@ tr.bp-wc-vendors-disabled th label b::after, p.bp-wc-vendors-disabled::after {
     margin-right: 10px;
     margin-bottom: 3px;
 }
+
+div#bp-wc-vendors-shortcode-result {
+    background-color: #fff;
+    padding: 10px;
+}

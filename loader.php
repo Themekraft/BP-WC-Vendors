@@ -48,7 +48,8 @@ class BP_WC_Vendors {
 
 		add_action( 'init', array( $this, 'includes' ), 4, 1 );
 		add_action( 'plugins_loaded', array( $this, 'load_plugin_textdomain' ) );
-		add_action( 'admin_enqueue_scripts', array( $this, 'bp_wcv_admin_js' ), 2, 10 );
+		add_action( 'admin_enqueue_scripts', array( $this, 'bp_wcv_admin_js' ), 1, 10 );
+		add_action( 'admin_enqueue_scripts', array( $this, 'bp_wcv_admin_css' ), 1, 10 );
 		add_action( 'wp_enqueue_scripts', array( $this, 'bp_wcv_front_js_css' ), 2, 1 );
 
 		// Load the BuddyPress needed files and create the BP WC Vendors Component
@@ -125,7 +126,13 @@ class BP_WC_Vendors {
 	 * @package bp_wcv
 	 * @since 0.1
 	 */
-	function bp_wcv_admin_style( $hook_suffix ) {
+	function bp_wcv_admin_css( $hook_suffix ) {
+
+		if($hook_suffix != 'toplevel_page_bp_wc_vendors_screen') {
+			return;
+		}
+		wp_enqueue_style( 'bp_wcv_wp_admin_css', plugins_url('/assets/admin/css/admin.css', __FILE__) );
+
 	}
 
 	/**
@@ -138,7 +145,7 @@ class BP_WC_Vendors {
 		if($hook_suffix != 'toplevel_page_bp_wc_vendors_screen') {
 			return;
 		}
-		wp_enqueue_style( 'custom_wp_admin_css', plugins_url('/assets/admin/css/admin.css', __FILE__) );
+		wp_enqueue_script( 'bp_wcv_wp_admin_js', plugins_url('/assets/admin/js/admin.js', __FILE__) );
 
 	}
 
