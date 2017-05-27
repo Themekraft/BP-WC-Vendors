@@ -70,6 +70,10 @@ function bp_wc_vendors_screen_function() {
 
 		$tabs = array( 'general' => 'Dashboard Tabs', 'products' => 'Product Creation', 'links' => 'Deactivate Links', 'redirects' => 'Redirects', 'signup' => 'Sign up Forms', 'go_pro' => '<font color="#b22222">Go Professional!!!</font>');
 
+        if ( bp_wc_vendors_fs()->is_plan__premium_only('professional') ) {
+	        unset($tabs['go_pro']);
+        }
+
 		$tabs = apply_filters( 'buddyforms_admin_tabs', $tabs );
 
 		echo '<h2 class="nav-tab-wrapper" style="padding-bottom: 0;">';
@@ -104,9 +108,8 @@ function bp_wc_vendors_screen_function() {
                         <table class="form-table">
                             <tr>
                                 <th><label for="">Default Tabs</label></th>
-                                <td><p>You are using the free version. There are no options for the Free Dashboard. All Tabs get included<br>
-
-                                       Important:  You are using WC Vendors Pro Version you need at least the BP WC Vendors Professional Plan fro the integration to work.</p>
+                                <td>
+                                    <?php bp_wcv_disabled_message(); ?>
 
 	                                <?php isset( $bp_wc_vendors_options['general']['tab_settings_disabled'] ) ? $tab_settings_disabled = $bp_wc_vendors_options['general']['tab_settings_disabled'] : $tab_settings_disabled = 0; ?>
                                     <p <?php bp_wcv_pro() ?>><input <?php bp_wcv_disabled() ?> name='bp_wc_vendors_options[general][tab_settings_disabled]' type='checkbox' value='1' <?php checked( $tab_settings_disabled, 1 ); ?> /> <b>Turn off "Settings" tab </b>
@@ -319,7 +322,7 @@ function bp_wcv_pro() {
 
 	$class = 'class="bp-wc-vendors-disabled"';
 
-	if ( bp_wc_vendors_fs()->is_plan( 'professional' ) ) {
+	if ( bp_wc_vendors_fs()->is_plan( 'professional' ) && defined( 'WCV_PRO_VERSION') ) {
 		$class = "";
 	}
 
@@ -329,9 +332,27 @@ function bp_wcv_pro() {
 function bp_wcv_disabled() {
 	$disabled = 'disabled';
 
-	if ( bp_wc_vendors_fs()->is_plan( 'professional' ) ) {
+	if ( bp_wc_vendors_fs()->is_plan( 'professional' ) && defined( 'WCV_PRO_VERSION')) {
 		$disabled = "";
 	}
 
 	echo $disabled;
+}
+
+function bp_wcv_disabled_message() {
+	$message = __('You are using the free Version. Please make sure to Update to the Pro Versions to use the Pro Features ', 'bp-wcv') . '<br><br>';
+
+	if ( !defined( 'WCV_PRO_VERSION')) {
+		$message .= '<p><b>WC Vendors Pro</b> You need the WC Vendors Pro Version to change this settings: <a href="https://www.wcvendors.com/product/wc-vendors-pro/" target="_blank">Get it here</a></p><br>';
+	}
+
+	if ( !bp_wc_vendors_fs()->is_plan( 'professional' ) ) {
+		$message .= '<p><b>BP WC Vendors Pro</b>  You need the BP WC Vendors Pro Version to change this settings: <a href="https://themekraft.com/products/buddypress-woocommerce-vendors" target="_blank">Get it here</a></p><br>';
+	}
+
+	if ( bp_wc_vendors_fs()->is_plan( 'professional' ) && defined( 'WCV_PRO_VERSION') ) {
+		$message = '';
+	}
+
+	echo $message;
 }
