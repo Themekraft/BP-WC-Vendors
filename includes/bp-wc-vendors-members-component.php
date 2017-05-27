@@ -104,17 +104,18 @@ class BuddyForms_WC_Vendors_Component extends BP_Component {
 				);
 			}
 		}
-
-		if ( ! isset( $bp_wc_vendors_options['tab_orders_disabled'] ) ) {
-			$sub_nav[] = array(
-				'name'            => __( 'Orders', 'wcvendors' ),
-				'slug'            => 'vendor-dashboard-orders',
-				'parent_slug'     => $parent_slug,
-				'parent_url'      => trailingslashit( bp_loggedin_user_domain() . $parent_slug ),
-				'item_css_id'     => 'vendor-dashboard',
-				'screen_function' => array( $this, 'bp_wc_vendors_screen_settings' ),
-				'user_has_access' => bp_is_my_profile()
-			);
+		if ( bp_wc_vendors_fs()->is_plan('professional', true) ) {
+			if ( ! isset( $bp_wc_vendors_options['tab_orders_disabled'] ) && defined( 'WCV_PRO_VERSION') ) {
+				$sub_nav[] = array(
+					'name'            => __( 'Orders', 'wcvendors' ),
+					'slug'            => 'vendor-dashboard-orders',
+					'parent_slug'     => $parent_slug,
+					'parent_url'      => trailingslashit( bp_loggedin_user_domain() . $parent_slug ),
+					'item_css_id'     => 'vendor-dashboard',
+					'screen_function' => array( $this, 'bp_wc_vendors_screen_settings' ),
+					'user_has_access' => bp_is_my_profile()
+				);
+			}
 		}
 
 		if ( ! isset( $bp_wc_vendors_options['tab_settings_disabled'] ) ) {

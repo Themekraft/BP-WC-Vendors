@@ -50,7 +50,7 @@ class BP_WC_Vendors {
 		add_action( 'plugins_loaded', array( $this, 'load_plugin_textdomain' ) );
 		add_action( 'admin_enqueue_scripts', array( $this, 'bp_wcv_admin_js' ), 1, 10 );
 		add_action( 'admin_enqueue_scripts', array( $this, 'bp_wcv_admin_css' ), 1, 10 );
-		add_action( 'wp_enqueue_scripts', array( $this, 'bp_wcv_front_js_css' ), 2, 1 );
+		add_action( 'wp_enqueue_scripts', array( $this, 'bp_wcv_front_js_css' ), 1, 1 );
 
 		// Load the BuddyPress needed files and create the BP WC Vendors Component
 		add_action( 'bp_setup_components', array( $this, 'bp_wc_vendors_bp_init' ), 10 );
@@ -197,7 +197,7 @@ add_action( 'init', function () {
 			$plugins['buddyforms'] = array(
 				'name'      => 'BuddyForms',
 				'slug'      => 'buddyforms',
-				'required'  => false,
+				'required'  => true,
 			);
 		}
 
@@ -207,10 +207,22 @@ add_action( 'init', function () {
 			'required' => false,
 		);
 
+		$plugins['buddyforms-woocommerce-form-elements'] = array(
+			'name'     => 'BuddyForms WooCommerce Form Elements',
+			'slug'     => 'buddyforms-woocommerce-form-elements',
+			'required' => false,
+		);
+
 		$plugins['woocommerce'] = array(
-			'name'     => 'WooCommerce',
+			'name'     => 'A WooCommerce',
 			'slug'     => 'woocommerce',
 			'required' => true,
+		);
+
+		$plugins['wc4bp'] = array(
+			'name'     => 'WooCommerce BuddyPress Integration',
+			'slug'     => 'wc4bp',
+			'required' => false,
 		);
 
 		$plugins['wc-vendors'] = array(
@@ -221,17 +233,11 @@ add_action( 'init', function () {
 
 		$config = array(
 			'id'           => 'tgmpa',
-			// Unique ID for hashing notices for multiple instances of TGMPA.
 			'parent_slug'  => 'plugins.php',
-			// Parent menu slug.
-			'capability'   => '^',
-			// Capability needed to view plugin install page, should be a capability associated with the parent menu used.
+			'capability'   => 'manage_options',
 			'has_notices'  => true,
-			// Show admin notices or not.
 			'dismissable'  => true,
-			// If false, a user cannot dismiss the nag message.
 			'is_automatic' => true,
-			// Automatically activate plugins after installation or not.
 		);
 
 		// Call the tgmpa function to register the required plugins

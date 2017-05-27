@@ -5,7 +5,7 @@
 function bp_wcv_welcome_screen_menu() {
 	add_submenu_page( 'bp_wc_vendors_screen', __( 'Info', 'bp_wcv_' ), __( 'Info', 'bp_wcv_' ), 'manage_options', 'bp_wcv_welcome_screen', 'bp_wcv_welcome_screen_content' );
 }
-add_action( 'admin_menu', 'bp_wcv_welcome_screen_menu', 9999 );
+add_action( 'admin_menu', 'bp_wcv_welcome_screen_menu' );
 
 function bp_wcv_welcome_screen_content() {
 	?>
@@ -14,7 +14,9 @@ function bp_wcv_welcome_screen_content() {
 
 		<style>
 			/* Welcome Page CSS */
-
+            .tgmpa.wrap h1{
+                display: none;
+            }
 			.about-wrap.bp-wcv-welcome {
 				margin-top: 40px;
 			}
@@ -103,7 +105,7 @@ function bp_wcv_welcome_screen_content() {
 
 			<p class="about-text">The BuddyPress Marketplace - Enjoy Groundbreaking New Features!</p>
 
-			<h2 class="nav-tab-wrapper wp-clearfix">
+            <h2 class="nav-tab-wrapper wp-clearfix">
 				<a href="about.php" class="nav-tab nav-tab-active">What’s New</a>
 				<a href="admin.php?page=bp_wc_vendors_screen-addons" target="_new" title="Browse Add-ons" class="nav-tab">Browse Add-ons</a>
 			</h2>
@@ -121,63 +123,65 @@ function bp_wcv_welcome_screen_content() {
                 <div class="xcol col-big">
                     <h2>The final collection of Plugins for your Premium Marketplace Bundled and Supported in one Plugin</h2>
                     <p class="lead">
-                        With BuddyPress, WooCommerce + WC4BP, WC Vendor + BP WC Vendors and BuddyForms to create beautiful and intuitive Product Forms you have all tools to your hand you need to build the next outstanding Marketplace.
+                        With BuddyPress, WooCommerce + WC4BP, WC Vendor + BP WC Vendors and BuddyForms to create beautiful and intuitive Product Forms you have all tools to your hands you need to build the next outstanding Marketplace.
                     </p>
+                </div>
 
+			</div>
+
+            <hr style="margin: 30px 0;">
+
+            <div class="feature-section two-col" style="margin: 30px 0; overflow: auto;">
+
+                <div class="xcol col-big">
+                    <h2>First Step install all Dependencies</h2>
                     <p class="lead">
-                        Keep the admin for admins and make your BuddyPress Profile the Home for all the Vendor and Customer needs
+                        We recommend you to install and activate all Plugins from the list below. Just check all and select install/ activate in the Bulk Actions
                     </p>
+                    <?php $jhg = new TGM_Plugin_Activation; $jhg->install_plugins_page(); ?>
                 </div>
 
-			</div>
+            </div>
 
-			<hr>
+            <div class="feature-section two-col" style="margin: 30px 0; overflow: auto;">
 
+                <div class="xcol col-big">
+                    <h2>Next Step: Setup All!</h2>
+                    <p class="lead">
+                        Go to the <a href="<?php echo admin_url('admin.php?page=bp_wc_vendors_screen') ?>" >Plugin Settings</a> and Set up all to your needs. You can find Documentation and Help for the different plugins from the links below.
+                    </p>
 
-			<div class="feature-section two-col" style="margin: 30px 0; overflow: auto;">
+                </div>
 
-				<div class="xcol col-big">
-					<h2>All the "My Account" Pages in the BuddyPress Profile</h2>
-					<p class="lead">
-						Integrate the My Account with BuddyPress Member Profiles and let your Customers find all in one place
-					</p>
-				</div>
-
-                <div class="xcol col-small">
-                    <div class="imgframe">
-                        <img class="nopad"
-                             style="margin: 10px 0; padding: 5px; background: #fff; border: 1px solid #ddd;"
-                             src="<?php echo BP_WCV_PLUGIN_URL . 'assets/admin/images/wc4bp-banner-1544x500.jpg'?>"
-                             alt="Frontend Product Forms">
+                <div class="bfw-section bfw-getting-started">
+                    <h3>Documentation</h3>
+                    <div class="bfw-col bfw-col-50">
+                        <div class="well">
+                            <h3 class="bfw-title">External</h3>
+                            <ul>
+                                <li><a href="https://docs.woocommerce.com/documentation/plugins/woocommerce/" target="_blank"><b>WooCommerce</b></a></li>
+                                <li><a href="https://www.wcvendors.com/kb/" target="_blank"><b>WC Vendors</b></a></li>
+                                <li><a href="https://codex.buddypress.org/" target="_blank"><b>BuddyPress</b></a></li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="bfw-col bfw-col-50">
+                        <div class="well">
+                            <h3 class="bfw-title">ThemeKraft</h3>
+                            <ul>
+                                <li><a href="https://docs.themekraft.com/collection/208-wc4bp-integration" target="_blank"><b>WooCommerce BuddyPress Integration</b></a></li>
+                                <li><a href="https://docs.themekraft.com/collection/474-bp-wc-vendors" target="_blank"><b>WC BP Vendors</b></a></li>
+                                <li><a href="https://docs.buddyforms.com" target="_blank"><b>BuddyForms</b></a></li>
+                            </ul>
+                        </div>
                     </div>
                 </div>
 
-			</div>
+            </div>
 
-			<hr>
+            <hr style="margin: 30px 0;">
 
-			<div class="feature-section two-col" style="margin: 30px 0; overflow: auto;">
 
-				<div class="xcol col-big">
-					<h2>Product Creation at its finest</h2>
-					<p class="lead">
-						Build outstanding Product Forms for your Vendors.
-                        Integrate Vendor Product Forms and Vendor Product lists into the BuddyPress Profile
-                        <b>For the Customer:</b> Let your Customers find the Vendor Products in the Vendor profile
-                        <b>For the Vendor:</b> Let your vendors manage there products form there Profile
-                    </p>
-				</div>
-
-                <div class="xcol col-small">
-                    <div class="imgframe">
-                        <img class="nopad"
-                             style="margin: 10px 0; padding: 5px; background: #fff; border: 1px solid #ddd;"
-                             src="<?php echo BP_WCV_PLUGIN_URL . 'assets/admin/images/buddyforms-banner-1544x500.jpg'?>"
-                             alt="Frontend Product Forms">
-                    </div>
-                </div>
-
-			</div>
 
 
 			<!-- Blogpost & Changelog -->
@@ -185,7 +189,7 @@ function bp_wcv_welcome_screen_content() {
 				<div class="bfw-col bfw-col-50">
 					<h2 class="bfw-title">Latest Blogpost</h2>
 					<p class="lead">Read all about Marketplaces with BuddyPress. Find Tips and Tricks in our Blog:</p>
-					<a href="https://themekraft.com/bp_wcv_-news/" target="_new" class="button button-primary">Read Blogpost</a>
+					<a href="https://themekraft.com/news/" target="_new" class="button button-primary">Read Blogpost</a>
 				</div>
 				<div class="bfw-col bfw-col-50">
 					<h2 class="bfw-title">Changelog</h2>
@@ -198,27 +202,82 @@ function bp_wcv_welcome_screen_content() {
 			<hr style="margin: 70px 0;">
 
 
-			<!-- Getting Started -->
-			<div class="bfw-section bfw-getting-started">
-				<div class="bfw-col bfw-col-50">
-					<div class="well">
-						<h3 class="bfw-title">First Time Here?</h3>
-							<a class="button xbutton-primary" href="http://docs.themekraft.com/" title="" target="new">Getting Started</a>
-					</div>
-				</div>
-				<div class="bfw-col bfw-col-50">
-					<div class="well">
-						<h3 class="bfw-title">How To Create New Forms</h3>
-							<a class="button xbutton-primary" href="" title="" target="new">Integrate Vendor Dashboard</a><br>
-							<a class="button xbutton-primary" href="" title="" target="new">Integrate My Account Pages</a><br>
-							<a class="button xbutton-primary" href="" title="" target="new">Create Product Forms</a><br>
-                            <a class="button xbutton-primary" href="http://docs.buddyforms.com/article/151-create-a-social-marketplace-with-woocommerce-and-buddypress" title="" target="new">Marketplace with BuddyPress</a><br>
-					</div>
-				</div>
-			</div>
+            <h2>GO PRO and get the most out of your Marketplace</h2>
 
+            <div class="feature-section two-col" style="margin: 30px 0; overflow: auto;">
+
+                <div class="xcol col-big">
+                    <h2>The "Vendor Pro Dashboard" in the BuddyPress Profile</h2>
+                    <p class="lead">
+                        Integrate the Vendor Dashboard with BuddyPress Member Profiles and let your Vendors manage there Shop from there Profile
+                    </p>
+                </div>
+
+                <div class="xcol col-small">
+                    <div class="imgframe">
+                        <img class="nopad"
+                             style="margin: 10px 0; padding: 5px; background: #fff; border: 1px solid #ddd;"
+                             src="<?php echo BP_WCV_PLUGIN_URL . 'assets/admin/images/bp-wcv-banner-1544x500.jpg'?>"
+                             alt="Frontend Product Forms">
+                    </div>
+                    <a href="https://themekraft.com/products/woocommerce-buddypress-vendors-integration/" target="_blank">Get BP WC Vendors Pro Now</a> - <a href="https://www.wcvendors.com/product/wc-vendors-pro/" target="_blank">Get WC Vendors Pro Now</a>
+                </div>
+
+            </div>
+
+            <hr>
+
+            <div class="feature-section two-col" style="margin: 30px 0; overflow: auto;">
+
+                <div class="xcol col-big">
+                    <h2>All the "My Account" Pages in the BuddyPress Profile</h2>
+                    <p class="lead">
+                        Integrate the My Account with BuddyPress Member Profiles and let your Customers find all in one place
+                    </p>
+                </div>
+
+                <div class="xcol col-small">
+                    <div class="imgframe">
+                        <img class="nopad"
+                             style="margin: 10px 0; padding: 5px; background: #fff; border: 1px solid #ddd;"
+                             src="<?php echo BP_WCV_PLUGIN_URL . 'assets/admin/images/wc4bp-banner-1544x500.jpg'?>"
+                             alt="Frontend Product Forms">
+                    </div>
+                    <a href="https://themekraft.com/products/woocommerce-buddypress-integration/" target="_blank">Get WC4BP Pro Now</a>
+                </div>
+
+            </div>
+
+            <hr>
+
+            <div class="feature-section two-col" style="margin: 30px 0; overflow: auto;">
+
+                <div class="xcol col-big">
+                    <h2>Product Creation at its finest</h2>
+                    <p class="lead">
+                        Build outstanding Product Forms for your Vendors.
+                        Integrate Vendor Product Forms and Vendor Product lists into the BuddyPress Profile
+                        <b>For the Customer:</b> Let your Customers find the Vendor Products in the Vendor profile
+                        <b>For the Vendor:</b> Let your vendors manage there products form there Profile
+                    </p>
+                </div>
+
+                <div class="xcol col-small">
+                    <div class="imgframe">
+                        <img class="nopad"
+                             style="margin: 10px 0; padding: 5px; background: #fff; border: 1px solid #ddd;"
+                             src="<?php echo BP_WCV_PLUGIN_URL . 'assets/admin/images/buddyforms-banner-1544x500.jpg'?>"
+                             alt="Frontend Product Forms">
+                    </div>
+
+                    <a href="https://themekraft.com/buddyforms/" target="_blank">Get BuddyForms Pro Now</a>
+                </div>
+
+            </div>
 
 		</div>
+
+
 
 
 	</div>

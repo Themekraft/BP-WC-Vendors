@@ -68,7 +68,7 @@ function bp_wc_vendors_screen_function() {
 
 		<?php
 
-		$tabs = array( 'general' => 'Dashboard Tabs', 'products' => 'Product Creation', 'links' => 'Deactivate Links', 'redirects' => 'Redirects', 'signup' => 'Sign up Forms' );
+		$tabs = array( 'general' => 'Dashboard Tabs', 'products' => 'Product Creation', 'links' => 'Deactivate Links', 'redirects' => 'Redirects', 'signup' => 'Sign up Forms', 'go_pro' => '<font color="#b22222">Go Professional!!!</font>');
 
 		$tabs = apply_filters( 'buddyforms_admin_tabs', $tabs );
 
@@ -148,7 +148,7 @@ function bp_wc_vendors_screen_function() {
                             <tr>
                                 <th><label for="">WC Vendors Free</label></th>
                                 <td>
-                                    <p>You can use BuddyForms to create forms for any post type. You can integrate this forms into the BuddyPress Member Profile or the Vendors Dashboard.</p>
+                                    <p>You can use BuddyForms to create forms for any product type. You can integrate this forms into the BuddyPress Member Profile or the Vendors Dashboard.</p>
                                     <p>Just create a Product Form and select the integration in the Form Settings</p>
                                 </td>
                             </tr>
@@ -293,7 +293,7 @@ function bp_wc_vendors_screen_function() {
                             <tr>
                                 <th><label for="">Add to My Account for non Vendors</label></th>
                                 <td>
-                                    <p>If you integrate the My Account into BuddyPress It make sense to Integrate the "Become a vendor" Form into the My Account (Shop Tab) so its all on the correct place.</p>
+                                    <p>If you integrate the My Account into BuddyPress It make sense to Integrate the "Become a vendor" Form into the My Account (Shop Tab).</p>
                                     <p>To do so create a page and add the shortcode [bp_wcv_bav] as content. In the next step add this Page in the WC4BP Integrate Pages Settings as new Page.
 
                                         This will add the "Become a Vendor Form to the Shop Tab as Sub Tab." </p>
@@ -303,6 +303,9 @@ function bp_wc_vendors_screen_function() {
                         <input type="submit" value="Save" name="bp_wc_vendors_options_signup_submit" class="button">
 						<?php
 						break;
+                    case 'go_pro':
+	                    wp_redirect( admin_url( 'admin.php?page=bp_wc_vendors_screen-pricing' ) );
+                        break;
 				}
 				?>
             </div>
