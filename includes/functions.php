@@ -193,7 +193,7 @@ function bp_wc_vendors_woocommerce_before_template_part($located, $template_name
 		extract( $args );
 	}
 
-	if( $template_name == 'links.php' ){
+	if( $template_name == 'links.php' || $template_name == 'quick-links.php' ){
 		$template_path = BP_WCV_TEMPLATE_PATH . 'dashboard/';
 		$located = wc_locate_template( $template_name, $template_path, $template_path );
 	}

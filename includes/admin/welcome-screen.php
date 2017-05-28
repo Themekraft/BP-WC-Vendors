@@ -93,9 +93,6 @@ function bp_wcv_welcome_screen_content() {
 
             <hr style="margin: 30px 0;">
 
-
-
-
 			<!-- Blogpost & Changelog -->
 			<div class="bfw-section bfw-news" style="margin-top: 30px;">
 				<div class="bfw-col bfw-col-50">
@@ -111,7 +108,7 @@ function bp_wcv_welcome_screen_content() {
 			</div>
 
 
-			<hr style="margin: 70px 0;">
+			<hr style="margin: 140px 0;">
 
 
             <h2>GO PRO and get the most out of your Marketplace</h2>
