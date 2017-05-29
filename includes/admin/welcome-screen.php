@@ -93,7 +93,7 @@ function bp_wcv_welcome_screen_content() {
 
 								<div style="padding: 20px 20px; background: #fff; border: 1px solid rgba(0,0,0,0.1); margin: 50px 0 20px;">
 									<p class="lead"><b>Need Help?</b></p>
-									<p class="lead"><a href="#" title="Get the whole setup done, by pros." target="_blank" class="button button-primary">Done-For-You Service</a></p>
+									<p class="lead"><a href="https://themekraft.com/wordpress-custom-development-design/" title="Get the whole setup done, by pros." target="_blank" class="button button-primary">Done-For-You Service</a></p>
 									<p class="lead">Save time and do it properly.</p>
 								</div>
 
