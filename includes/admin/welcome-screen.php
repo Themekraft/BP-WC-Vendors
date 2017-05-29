@@ -136,11 +136,11 @@ function bp_wcv_welcome_screen_content() {
                 <div class="xcol col-small">
                     <div class="imgframe">
                         <img class="nopad"
-                             style="margin: 10px 0; padding: 5px; background: #fff; border: 1px solid #ddd;"
+                             style="margin: 10px 0; padding: 5px; background: #fff; border: 1px solid #ddd; max-width: 98%;"
                              src="<?php echo BP_WCV_PLUGIN_URL . 'assets/admin/images/bp-wcv-banner-1544x500.jpg'?>"
                              alt="Frontend Product Forms">
                     </div>
-										<a href="https://themekraft.com/products/woocommerce-buddypress-vendors-integration/" target="_blank" class="button button-primary">Get BP WC Vendors PRO Here</a>
+										<a href="https://themekraft.com/products/bp-wc-vendors/" target="_blank" class="button button-primary">Get BP WC Vendors PRO Here</a>
                     <a href="https://www.wcvendors.com/product/wc-vendors-pro/" target="_blank"  class="button button-primary">Get WC Vendors PRO Here</a>
                 </div>
 
@@ -160,7 +160,7 @@ function bp_wcv_welcome_screen_content() {
                 <div class="xcol col-small">
                     <div class="imgframe">
                         <img class="nopad"
-                             style="margin: 10px 0; padding: 5px; background: #fff; border: 1px solid #ddd;"
+                             style="margin: 10px 0; padding: 5px; background: #fff; border: 1px solid #ddd; max-width: 98%;"
                              src="<?php echo BP_WCV_PLUGIN_URL . 'assets/admin/images/wc4bp-banner-1544x500.jpg'?>"
                              alt="Frontend Product Forms">
                     </div>
@@ -186,7 +186,7 @@ function bp_wcv_welcome_screen_content() {
                 <div class="xcol col-small">
                     <div class="imgframe">
                         <img class="nopad"
-                             style="margin: 10px 0; padding: 5px; background: #fff; border: 1px solid #ddd;"
+                             style="margin: 10px 0; padding: 5px; background: #fff; border: 1px solid #ddd; max-width: 98%;"
                              src="<?php echo BP_WCV_PLUGIN_URL . 'assets/admin/images/buddyforms-banner-1544x500.jpg'?>"
                              alt="Frontend Product Forms">
                     </div>
