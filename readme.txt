@@ -3,7 +3,7 @@ Contributors: svenl77, themekraft, buddyforms,
 Tags: multi vendor, marketplace, buddypress, woocommerce, vendor stores, vendors, wc-vendors, wc vendors, wc4bp , buddyforms, marketplace, user, members, profiles, custom post types, taxonomy, frontend posting, frontend editing, revision, review, moderation, frontend editor
 Requires at least: WordPress 3.9
 Tested up to: WordPress 4.7
-Stable tag: 1.0.9.1
+Stable tag: 1.1
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -145,16 +145,50 @@ We believe that WC Vendors is the best vendor solution on the market and want to
 
 == Changelog ==
 
+
+= 1.1 =
+* Plugin works now with the free and pro version of WC Vendors.
+* Complete rewrite to free/ pro business model with freemius integration
+* New Options, New Admin, New Structure
+* Create new file buddyforms.php for the BuddyForms integration
+* Added options for product creation with BuddyForms
+* Restructure admin settings
+* Added BuddyForm Form Builder Metabox
+* Added a new function to move form tabs into the vendors dashboard
+* Improved the Admin UI
+* Created a starter class for more structure
+* Added BuddyForms and BuddyForms Members as recommended plugins
+* Create a new file welcome-screen.php for the activation redirect.
+* Added new admin tab for the sign up and become ma vendor forms
+* Created a new file shortcodes.php to add shortcodes
+* Create two new shortcodes
+    1. to view the become a vendor shortcake
+    2. display a registation form or become an author if already logged in
+* Created new file admin.js
+* Created a shortcode generator to use for become a vendor/ registration forms
+* Added WooElements and wc4bp as dependancies recommendations.
+* Included the bp wc vendors banner
+* Make sure the orders tab is only loaded if WC Vendors Pro is activated
+* Created a Form Builder Template to create the Become a Vendor Form
+* Added Go Professional Tab to the Settings
+* Recreate the Welcome Screen with Dependancies management and Instillation Instructions. Links to help and Pro Versions
+* Moved the welcome css to a css file and make sure it only gets loaded if the welcome screen is displayed
+* Make sure the GO Pro links are removed if pro version.
+* Make sure the quick-links.php template is overwritten with an empty template. We not want to have tabs as links in the free and pro version all needed links will be integrated as BuddyPress tabs.
+* Clean up the code
+* Fixed multiple issues
+* Lots of overall improvements
+
 = 1.0.9.1 =
-Added admin notice The plugin "does not support WooCommerce 3.0 and will become a free/pro Plugin"
+* Added admin notice The plugin "does not support WooCommerce 3.0 and will become a free/pro Plugin"
 
 = 1.0.9 =
-Fixed the pagination in the vendor dashboard products section
-Check if roles exist to avoid php notice
+* Fixed the pagination in the vendor dashboard products section
+* Check if roles exist to avoid php notice
 
 = 1.0.8 =
-Remove the Quicklinks from the dashboard. Some user reported wired issues with the redirect.
-Remove all BuddyForms dependencies and template files.
+* Remove the Quicklinks from the dashboard. Some user reported wired issues with the redirect.
+* Remove all BuddyForms dependencies and template files.
 
 = 1.0.7 =
 * Fixed some js issues in the profile.

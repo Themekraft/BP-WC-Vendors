@@ -272,9 +272,6 @@ function bp_wc_vendors_fs() {
 				'first-path'     => 'admin.php?page=bp_wcv_welcome_screen',
 				'support'        => false,
 			),
-			// Set the SDK to work in a sandbox mode (for development & testing).
-			// IMPORTANT: MAKE SURE TO REMOVE SECRET KEY BEFORE DEPLOYMENT.
-			'secret_key'          => 'sk_~_UJ99}ShjHEJZ.:aDP{N(->Thf{X',
 		) );
 	}
 
