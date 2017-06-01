@@ -94,6 +94,11 @@ function bp_wc_vendors_disable_sold_by() {
 
 add_action( 'buddyforms_the_loop_item_last', 'bp_wc_vendors_buddyforms_the_loop_actions', 10, 1 );
 function bp_wc_vendors_buddyforms_the_loop_actions( $post_id ) {
+
+	if( get_post_type( $post_id ) != 'product'){
+		return;
+	}
+
 	$product = new WC_Product( $post_id );
 
 	if ( $product->price ) {
