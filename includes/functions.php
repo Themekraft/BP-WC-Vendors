@@ -275,20 +275,17 @@ function bp_wcv_buddyforms_members_parent_setup_nav( $parent, $form_slug ){
 
 }
 
-add_filter( 'buddyforms_templates', 'bp_wcv_buddyforms_templates' );
-add_filter( 'buddyforms_wizard_types', 'bp_wcv_buddyforms_templates' );
+add_filter( 'buddyforms_form_builder_templates', 'bp_wcv_buddyforms_form_builder_templates' );
+function bp_wcv_buddyforms_form_builder_templates( $buddyforms_form_builder_templates ){
 
-function bp_wcv_buddyforms_templates( $buddyforms_templates ){
+	$buddyforms_form_builder_templates['vendor']['title'] = 'Become a WC Vendor';
+	$buddyforms_form_builder_templates['vendor']['desc']  = 'Setup a "Become a Vendor" Registration Form.';
 
-	$buddyforms_templates['vendor']['title'] = 'Become a WC Vendor';
-	$buddyforms_templates['vendor']['desc']  = 'Setup a "Become a Vendor" Registration Form.';
-
-	return $buddyforms_templates;
+	return $buddyforms_form_builder_templates;
 
 }
 
 add_filter( 'buddyforms_form_builder_templates_json', 'bp_wcv_buddyforms_form_builder_templates_json' );
-
 function bp_wcv_buddyforms_form_builder_templates_json($buddyform){
 
 	if( isset( $_POST['template'] ) && $_POST['template'] == 'vendor' ){
