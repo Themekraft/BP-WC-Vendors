@@ -29,6 +29,13 @@ function bp_wc_vendors_store_redirect_to_profile() {
 
 	$pagename = get_query_var( 'pagename' );
 
+	$user_id = get_current_user_id();
+
+	if( ! WCV_Vendors::is_vendor( $user_id ) ){
+		return;
+	}
+
+
 //	if( ! WCV_Vendors::is_vendor_page()){
 //		return;
 //	}
@@ -63,6 +70,32 @@ function bp_wc_vendors_store_redirect_to_profile() {
 	exit;
 }
 
+add_filter( 'bf_members_get_redirect_link', 'bp_wcv_bf_members_get_redirect_link');
+
+function bp_wcv_bf_members_get_redirect_link( $link ){
+	global $bp, $wp_query;
+
+	$pagename = get_query_var( 'pagename' );
+
+	$user_id = get_current_user_id();
+
+	if( $pagename == 'vendor_dashboard' && ! WCV_Vendors::is_vendor( $user_id )){
+
+		if( class_exists('WCVendors_Pro') ){
+			$dashboard_page_id = WCVendors_Pro::get_option( 'dashboard_page_id' );
+		} else{
+			$dashboard_page_id = WC_Vendors::$pv_options->get_option( 'vendor_dashboard_page' );
+		}
+
+		$link = get_permalink($dashboard_page_id);
+
+	}
+
+	return $link;
+
+}
+
+
 
 add_action( 'template_redirect', 'bp_wc_vendors_dashboard_redirect_to_profile' );
 function bp_wc_vendors_dashboard_redirect_to_profile() {
@@ -70,6 +103,10 @@ function bp_wc_vendors_dashboard_redirect_to_profile() {
 
 	if ( ! isset( $post->ID ) || ! is_user_logged_in() ) {
 		return false;
+	}
+
+	if( ! WCV_Vendors::is_vendor( $post->post_author ) ){
+		return;
 	}
 
 	$user = wp_get_current_user();
@@ -250,9 +287,9 @@ function bp_wcv_buddyforms_templates( $buddyforms_templates ){
 
 }
 
-add_filter( 'buddyforms_templates_json', 'bp_wcv_buddyforms_templates_json' );
+add_filter( 'buddyforms_form_builder_templates_json', 'bp_wcv_buddyforms_form_builder_templates_json' );
 
-function bp_wcv_buddyforms_templates_json($buddyform){
+function bp_wcv_buddyforms_form_builder_templates_json($buddyform){
 
 	if( isset( $_POST['template'] ) && $_POST['template'] == 'vendor' ){
 		$buddyform = '{"form_fields":{"a40912e1a5":{"type":"user_login","slug":"user_login","name":"Username","description":"","required":["required"],"validation_error_message":"This field is required.","custom_class":""},"82abe39ed2":{"type":"user_email","slug":"user_email","name":"eMail","description":"","required":["required"],"validation_error_message":"This field is required.","custom_class":""},"611dc33cb2":{"type":"user_pass","slug":"user_pass","name":"Password","description":"","required":["required"],"validation_error_message":"This field is required.","custom_class":""},"636c12a746":{"type":"text","name":"Schop Name","description":"","validation_error_message":"This field is required.","validation_minlength":"0","validation_maxlength":"0","slug":"pv_shop_name","custom_class":""},"dfc114e960":{"type":"text","name":"PayPal E-mail (required)","description":"","required":["required"],"validation_error_message":"This field is required.","validation_minlength":"0","validation_maxlength":"0","slug":"pv_paypal","custom_class":""},"df44e14ace":{"type":"textarea","name":"Seller Info","description":"","validation_error_message":"This field is required.","validation_minlength":"0","validation_maxlength":"0","slug":"pv_seller_info","custom_class":""},"fce05b6cd3":{"type":"textarea","name":"Shop description","description":"","validation_error_message":"This field is required.","validation_minlength":"0","validation_maxlength":"0","slug":"pv_shop_description","custom_class":""}},"layout":{"cords":{"a40912e1a5":"1","82abe39ed2":"1","611dc33cb2":"1","636c12a746":"1","dfc114e960":"1","df44e14ace":"1","fce05b6cd3":"1"},"labels_layout":"inline","label_font_size":"","label_font_color":{"style":"auto","color":""},"label_font_style":"bold","desc_font_size":"","desc_font_color":{"color":""},"field_padding":"15","field_background_color":{"style":"auto","color":""},"field_border_color":{"style":"auto","color":""},"field_border_width":"","field_border_radius":"","field_font_size":"15","field_font_color":{"style":"auto","color":""},"field_placeholder_font_color":{"style":"auto","color":""},"field_active_background_color":{"style":"auto","color":""},"field_active_border_color":{"style":"auto","color":""},"field_active_font_color":{"style":"auto","color":""},"submit_text":"Submit","button_width":"blockmobile","button_alignment":"left","button_size":"large","button_class":"","button_border_radius":"","button_border_width":"","button_background_color":{"style":"auto","color":""},"button_font_color":{"style":"auto","color":""},"button_border_color":{"style":"auto","color":""},"button_background_color_hover":{"style":"auto","color":""},"button_font_color_hover":{"style":"auto","color":""},"button_border_color_hover":{"style":"auto","color":""},"custom_css":""},"form_type":"registration","after_submit":"display_page","after_submission_page":"33","after_submission_url":"","after_submit_message_text":"User Registration Successful! Please check your eMail Inbox and click the activation link to activate your account.","post_type":"bf_submissions","status":"publish","comment_status":"open","singular_name":"","attached_page":"none","edit_link":"all","list_posts_option":"list_all_form","list_posts_style":"list","public_submit":["public_submit"],"public_submit_login":"above","registration":{"activation_page":"33","activation_message_from_subject":"Vendor Account Activation Mail","activation_message_text":"Hi [user_login],\r\n\r\nGreat to see you come on board! Just one small step left to make your registration complete.\r\n<br>\r\n<b>Click the link below to activate your account.<\/b>\r\n<br>\r\n[activation_link]\r\n<br><br>\r\n[blog_title]","activation_message_from_name":"[blog_title]","activation_message_from_email":"dfg@dfg.fr","new_user_role":"vendor"},"profile_visibility":"any","name":"Become a Vendor","slug":"become-a-vendor"}';
