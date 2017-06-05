@@ -8,9 +8,10 @@ function bp_wc_vendors_store_redirect_to_profile() {
 	if( is_user_logged_in() && WCV_Vendors::is_vendor( get_current_user_id() ) ) {
 
 		if ( class_exists( 'WCVendors_Pro' ) ) {
-			$dashboard_page_id = WCVendors_Pro::get_option( 'dashboard_page_id' );
+			$dashboard_page_id = $pro_dashboard = WCVendors_Pro::get_option( 'dashboard_page_id' );
+			$free_dashboard = WC_Vendors::$pv_options->get_option( 'vendor_dashboard_page' );
 		} else {
-			$dashboard_page_id = WC_Vendors::$pv_options->get_option( 'vendor_dashboard_page' );
+			$dashboard_page_id = $free_dashboard = WC_Vendors::$pv_options->get_option( 'vendor_dashboard_page' );
 		}
 
 		//	if( ! WCV_Vendors::is_vendor_page()){
@@ -43,7 +44,10 @@ function bp_wc_vendors_store_redirect_to_profile() {
 //		exit;
 //	}
 
-		if ( empty($vendor_shop) && get_the_ID() == $dashboard_page_id ) {
+		if ( empty($vendor_shop) && get_the_ID() == $dashboard_page_id
+		     || empty($vendor_shop) && get_the_ID() == $pro_dashboard
+		     || empty($vendor_shop) && get_the_ID() == $free_dashboard
+		) {
 			$link = $link = bp_wc_vendors_get_redirect_link( $dashboard_page_id );
 			wp_safe_redirect( $link );
 			exit;
