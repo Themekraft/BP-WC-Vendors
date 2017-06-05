@@ -23,55 +23,7 @@ function bp_wc_vendors_dashboard_quick_links( $quick_links ) {
 	return $quick_links_new;
 }
 
-add_action( 'template_redirect', 'bp_wc_vendors_store_redirect_to_profile' );
-function bp_wc_vendors_store_redirect_to_profile() {
-	global $bp, $wp_query;
-
-	$pagename = get_query_var( 'pagename' );
-
-	$user_id = get_current_user_id();
-
-	if( ! WCV_Vendors::is_vendor( $user_id ) ){
-		return;
-	}
-
-
-//	if( ! WCV_Vendors::is_vendor_page()){
-//		return;
-//	}
-
-	if( ! in_array('shop_settings', $bp->unfiltered_uri ) ) {
-		return;
-	}
-
-//	if ( get_query_var( 'pagename' ) != 'edit' ) {
-//		return;
-//	}
-
-//	if(!in_array('edit', $bp->action_variables)){
-//		return;
-//	}
-
-	$bp_wc_vendors_options = bp_wc_vendors_get_options();
-	if ( ! isset( $bp_wc_vendors_options['redirect_vendor_store_to_profil'] ) && $bp_wc_vendors_options['redirect_vendor_store_to_profil'] == 'none' ) {
-		return;
-	}
-
-	$vendor_shop = get_query_var( 'vendor_shop' );
-
-	if ( $form_slug == 'none' ) {
-		$link = get_bloginfo( 'url' ) . '/' . $bp->pages->members->slug . '/' . $vendor_shop . ' /';
-		wp_safe_redirect( $link );
-		exit;
-	}
-
-	$link = get_bloginfo( 'url' ) . '/' . $bp->pages->members->slug . '/' . $vendor_shop . ' /' . $form_slug . '/';
-	wp_safe_redirect( $link );
-	exit;
-}
-
 add_filter( 'bf_members_get_redirect_link', 'bp_wcv_bf_members_get_redirect_link');
-
 function bp_wcv_bf_members_get_redirect_link( $link ){
 	global $bp, $wp_query;
 
@@ -93,33 +45,6 @@ function bp_wcv_bf_members_get_redirect_link( $link ){
 
 	return $link;
 
-}
-
-
-
-add_action( 'template_redirect', 'bp_wc_vendors_dashboard_redirect_to_profile' );
-function bp_wc_vendors_dashboard_redirect_to_profile() {
-	global $wp_query, $post;
-
-	if ( ! isset( $post->ID ) || ! is_user_logged_in() ) {
-		return false;
-	}
-
-	if( ! WCV_Vendors::is_vendor( $post->post_author ) ){
-		return;
-	}
-
-	$user = wp_get_current_user();
-	if ( ! in_array( 'vendor', (array) $user->roles ) ) {
-		return false;
-	}
-
-	$link = bp_wc_vendors_get_redirect_link( $post->ID );
-
-	if ( ! empty( $link ) ) :
-		wp_safe_redirect( $link );
-		exit;
-	endif;
 }
 
 function bp_wc_vendors_get_redirect_link( $post_ID ) {
