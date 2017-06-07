@@ -291,3 +291,14 @@ function bp_wc_vendors_fs_settings_url() {
 bp_wc_vendors_fs()->add_filter( 'connect_url', 'bp_wc_vendors_fs_settings_url' );
 bp_wc_vendors_fs()->add_filter( 'after_skip_url', 'bp_wc_vendors_fs_settings_url' );
 bp_wc_vendors_fs()->add_filter( 'after_connect_url', 'bp_wc_vendors_fs_settings_url' );
+
+function bp_wc_vendors_special_admin_notice() {
+	?>
+	<div class="notice notice-success is-dismissible">
+		<p><?php _e( 'PHP Version Update Required!', 'buddyforms' ); ?></p>
+		<p><?php _e( 'You are using PHP Version ' . PHP_VERSION, 'buddyforms' ); ?></p>
+		<p><?php _e( 'Please make sure you have at least php version 5.3 installed.', 'buddyforms' ); ?></p>
+	</div>
+	<?php
+}
+//add_action( 'admin_notices', 'buddyforms_php_version_admin_notice' );
