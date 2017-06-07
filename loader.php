@@ -297,7 +297,7 @@ function bp_wc_vendors_special_admin_notice() {
 	<div class="notice notice-success is-dismissible">
 		<h4 style="margin-top: 20px;">BUILD THE ULTIMATE BUDDYPRESS MARKETPLACE</h4>
 		<p style="line-height: 2.2; font-size: 13px;"><b>GO PRO NOW – AND SAVE BIG – 50% OFF - THIS MONTH ONLY</b><br>
-    Get 50% discount if you order within the beta month – only until 06 Jul 2017.
+    Get 50% discount if you order within the next month – only until 06 Jul 2017.
 		<br>
     Coupon Code: <span style="line-height: 1; margin: 0 4px; padding: 4px 10px; border-radius: 6px; font-size: 12px; background: #fff; border: 1px solid rgba(0,0,0,0.1);">BPWCVENDORS50</span></p>
 		<p style="margin: 20px 0;">
