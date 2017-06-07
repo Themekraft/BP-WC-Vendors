@@ -5,6 +5,10 @@ function bp_wc_vendors_store_redirect_to_profile() {
 
 	$pagename = get_query_var( 'pagename' );
 
+	if( ! class_exists('WCV_Vendors') ){
+		return;
+	}
+
 	if( is_user_logged_in() && WCV_Vendors::is_vendor( get_current_user_id() ) ) {
 
 		if ( class_exists( 'WCVendors_Pro' ) ) {

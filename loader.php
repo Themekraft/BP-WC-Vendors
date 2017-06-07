@@ -295,10 +295,12 @@ bp_wc_vendors_fs()->add_filter( 'after_connect_url', 'bp_wc_vendors_fs_settings_
 function bp_wc_vendors_special_admin_notice() {
 	?>
 	<div class="notice notice-success is-dismissible">
-		<p><?php _e( 'PHP Version Update Required!', 'buddyforms' ); ?></p>
-		<p><?php _e( 'You are using PHP Version ' . PHP_VERSION, 'buddyforms' ); ?></p>
-		<p><?php _e( 'Please make sure you have at least php version 5.3 installed.', 'buddyforms' ); ?></p>
+		<p>GO PRO NOW – AND SAVE BIG<br>
+            THIS WEEK – 60% OFF<br>
+            Get 60% discount if you order within the beta week – only until 06 June 2017.<br>
+
+            BPWCVENDORSBETA</p>
 	</div>
 	<?php
 }
-//add_action( 'admin_notices', 'buddyforms_php_version_admin_notice' );
+add_action( 'admin_notices', 'bp_wc_vendors_special_admin_notice' );
