@@ -3,7 +3,7 @@ Contributors: svenl77, themekraft, buddyforms,
 Tags: multi vendor, marketplace, buddypress, woocommerce, vendor stores, vendors, wc-vendors, wc vendors, wc4bp , buddyforms, marketplace, user, members, profiles, custom post types, taxonomy, frontend posting, frontend editing, revision, review, moderation, frontend editor
 Requires at least: WordPress 3.9
 Tested up to: WordPress 4.7
-Stable tag: 1.1
+Stable tag: 1.1.0.1
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -145,8 +145,10 @@ We believe that WC Vendors is the best vendor solution on the market and want to
 
 == Changelog ==
 
+= 1.1.0.1 - 8. Jun 2017 =
+* Fixed a redirect loop in some installed if free pro of wc vendors and bp wc vendors was mixed. Should work now with all combinations of free and pro.
 
-= 1.1 =
+= 1.1 - 7. Jun 2017 =
 * Plugin works now with the free and pro version of WC Vendors.
 * Complete rewrite to free/ pro business model with freemius integration
 * New Options, New Admin, New Structure

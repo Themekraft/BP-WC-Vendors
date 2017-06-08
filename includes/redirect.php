@@ -1,9 +1,17 @@
 <?php
-add_action( 'template_redirect', 'bp_wc_vendors_store_redirect_to_profile' );
+add_action( 'template_redirect', 'bp_wc_vendors_store_redirect_to_profile', 10 );
 function bp_wc_vendors_store_redirect_to_profile() {
-	global $bp, $wp_query, $post;;
+	global $bp, $wp_query, $post;
 
 	$pagename = get_query_var( 'pagename' );
+
+	if( bp_current_component() == $pagename){
+		return;
+	}
+
+	if( bp_current_action() == $pagename){
+		return;
+	}
 
 	if( ! class_exists('WCV_Vendors') ){
 		return;
@@ -52,7 +60,7 @@ function bp_wc_vendors_store_redirect_to_profile() {
 		     || empty($vendor_shop) && get_the_ID() == $pro_dashboard
 		     || empty($vendor_shop) && get_the_ID() == $free_dashboard
 		) {
-			$link = $link = bp_wc_vendors_get_redirect_link( $dashboard_page_id );
+			$link = bp_wc_vendors_get_redirect_link( $dashboard_page_id );
 			wp_safe_redirect( $link );
 			exit;
 		}
