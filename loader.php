@@ -293,18 +293,39 @@ bp_wc_vendors_fs()->add_filter( 'after_skip_url', 'bp_wc_vendors_fs_settings_url
 bp_wc_vendors_fs()->add_filter( 'after_connect_url', 'bp_wc_vendors_fs_settings_url' );
 
 function bp_wc_vendors_special_admin_notice() {
-	?>
-	<div class="notice notice-success is-dismissible">
-		<h4 style="margin-top: 20px;">BUILD THE ULTIMATE BUDDYPRESS MARKETPLACE</h4>
-		<p style="line-height: 2.2; font-size: 13px;"><b>GO PRO NOW – AND SAVE BIG – 50% OFF - THIS MONTH ONLY</b><br>
-    Get 50% discount if you order within the next month – only until 06 Jul 2017.
-		<br>
-    Coupon Code: <span style="line-height: 1; margin: 0 4px; padding: 4px 10px; border-radius: 6px; font-size: 12px; background: #fff; border: 1px solid rgba(0,0,0,0.1);">BPWCVENDORS50</span></p>
-		<p style="margin: 20px 0;">
-			<a class="button xbutton-primary" style="font-size: 15px; padding: 8px 20px; height: auto; line-height: 1;" href="https://themekraft.com/final-beta-buddypress-wc-vendors/" target="_blank">READ MORE</a>
-			<a class="button button-primary" style="font-size: 15px; padding: 8px 20px; height: auto; line-height: 1; box-shadow: none; text-shadow: none; background: #46b450; color: #fff; border: 1px solid rgba(0,0,0,0.1);" href="https://themekraft.com/lifetime-deal-95-instead-299-06-july/" target="_blank"><s>&dollar;299</s> &dollar;99 LIFETIME DEAL</a>
-		</p>
-	</div>
-	<?php
+	$user_id = get_current_user_id();
+	if ( ! get_user_meta( $user_id, 'bp_wc_vendors_special_admin_notice_dismissed' ) ) {
+		?>
+        <div class="notice notice-success is-dismissible">
+            <h4 style="margin-top: 20px;">BUILD THE ULTIMATE BUDDYPRESS MARKETPLACE</h4>
+            <p style="line-height: 2.2; font-size: 13px;"><b>GO PRO NOW – AND SAVE BIG – 50% OFF - THIS MONTH ONLY</b><br>
+                Get 50% discount if you order within the next month – only until 06 Jul 2017.
+                <br>
+                Coupon Code: <span
+                        style="line-height: 1; margin: 0 4px; padding: 4px 10px; border-radius: 6px; font-size: 12px; background: #fff; border: 1px solid rgba(0,0,0,0.1);">BPWCVENDORS50</span>
+            </p>
+            <p style="margin: 20px 0;">
+                <a class="button xbutton-primary"
+                   style="font-size: 15px; padding: 8px 20px; height: auto; line-height: 1;"
+                   href="https://themekraft.com/final-beta-buddypress-wc-vendors/" target="_blank">READ MORE</a>
+                <a class="button button-primary"
+                   style="font-size: 15px; padding: 8px 20px; height: auto; line-height: 1; box-shadow: none; text-shadow: none; background: #46b450; color: #fff; border: 1px solid rgba(0,0,0,0.1);"
+                   href="https://themekraft.com/lifetime-deal-95-instead-299-06-july/"
+                   target="_blank"><s>&dollar;299</s> &dollar;99 LIFETIME DEAL</a>
+                <a class="button xbutton-primary"
+                   style="font-size: 15px; padding: 8px 20px; height: auto; line-height: 1;"
+                   href="?bp_wc_vendors_special_admin_notice_dismissed">Dismiss</a>
+            </p>
+        </div>
+		<?php
+	}
 }
 add_action( 'admin_notices', 'bp_wc_vendors_special_admin_notice' );
+
+function bp_wc_vendors_special_admin_notice_dismissed() {
+	$user_id = get_current_user_id();
+	if ( isset( $_GET['bp_wc_vendors_special_admin_notice_dismissed'] ) ){
+		add_user_meta( $user_id, 'bp_wc_vendors_special_admin_notice_dismissed', 'true', true );
+	}
+}
+add_action( 'admin_init', 'bp_wc_vendors_special_admin_notice_dismissed' );
