@@ -1,10 +1,8 @@
 <?php
 add_shortcode( 'bp_wcv_bav', 'bp_wcv_bav' );
-
 function bp_wcv_bav(){
 	return wc_get_template( 'denied.php', array(), 'wc-vendors/dashboard/', wcv_plugin_dir . 'templates/dashboard/' );
 }
-
 
 add_shortcode( 'bp_wcv_bav_or_register', 'bp_wcv_bav_if_logged_in_or_reg' );
 function bp_wcv_bav_if_logged_in_or_reg( $args ){
@@ -21,7 +19,7 @@ function bp_wcv_bav_if_logged_in_or_reg( $args ){
 
 }
 
-
+add_action('template_redirect','bp_wcv_bav_if_logged_in_or_reg_process_shortcode',1);
 function bp_wcv_bav_if_logged_in_or_reg_process_shortcode() {
   if (!is_singular()) return;
   global $post;
@@ -43,4 +41,3 @@ function bp_wcv_bav_if_logged_in_or_reg_process_shortcode() {
 	  }
   }
 }
-add_action('template_redirect','bp_wcv_bav_if_logged_in_or_reg_process_shortcode',1);
