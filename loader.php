@@ -3,7 +3,7 @@
  Plugin Name: BP WC Vendors
  Plugin URI: https://themekraft.com/products/bp-wc-vendors/
  Description: Integrates the WC Vendors Pro Plugin With BuddyPress
- Version: 1.1.0.2
+ Version: 1.1.0.3
  Author: ThemeKraft
  Author URI: http://themekraft.com/
  License: GPLv3 or later
@@ -34,7 +34,7 @@ class BP_WC_Vendors {
 	/**
 	 * @var string
 	 */
-	public $version = '1.1.0.2';
+	public $version = '1.1.0.3';
 
 	/**
 	 * Initiate the class
@@ -310,7 +310,7 @@ function bp_wc_vendors_special_admin_notice() {
                    href="https://themekraft.com/final-beta-buddypress-wc-vendors/" target="_blank">READ MORE</a>
                 <a class="button button-primary"
                    style="font-size: 15px; padding: 8px 20px; height: auto; line-height: 1; box-shadow: none; text-shadow: none; background: #46b450; color: #fff; border: 1px solid rgba(0,0,0,0.1);"
-                   href="https://themekraft.com/lifetime-deal-95-instead-299-06-july/"
+                   href="https://themekraft.com/lifetime-deal-99-instead-299-06-july/"
                    target="_blank"><s>&dollar;299</s> &dollar;99 LIFETIME DEAL</a>
                 <a class="button xbutton-primary"
                    style="font-size: 15px; padding: 8px 20px; height: auto; line-height: 1;"

@@ -322,7 +322,7 @@ function bp_wcv_pro() {
 
 	$class = 'class="bp-wc-vendors-disabled"';
 
-	if ( bp_wc_vendors_fs()->is_plan( 'professional' ) && defined( 'WCV_PRO_VERSION') ) {
+	if ( bp_wc_vendors_fs()->is_plan( 'professional' ) && defined( 'WCV_PRO_VERSION' ) ) {
 		$class = "";
 	}
 
@@ -332,7 +332,7 @@ function bp_wcv_pro() {
 function bp_wcv_disabled() {
 	$disabled = 'disabled';
 
-	if ( bp_wc_vendors_fs()->is_plan( 'professional' ) && defined( 'WCV_PRO_VERSION')) {
+	if ( bp_wc_vendors_fs()->is_plan( 'professional' ) && defined( 'WCV_PRO_VERSION' ) ) {
 		$disabled = "";
 	}
 
@@ -342,7 +342,7 @@ function bp_wcv_disabled() {
 function bp_wcv_disabled_message() {
 	$message = __('You are using the free Version. Please make sure to Update to the Pro Versions to use the Pro Features ', 'bp-wcv') . '<br><br>';
 
-	if ( !defined( 'WCV_PRO_VERSION')) {
+	if ( !defined( 'WCV_PRO_VERSION' ) ) {
 		$message .= '<p><b>WC Vendors Pro</b> You need the WC Vendors Pro Version to change this settings: <a href="https://www.wcvendors.com/product/wc-vendors-pro/" target="_blank">Get it here</a></p><br>';
 	}
 
@@ -350,7 +350,7 @@ function bp_wcv_disabled_message() {
 		$message .= '<p><b>BP WC Vendors Pro</b>  You need the BP WC Vendors Pro Version to change this settings: <a href="https://themekraft.com/products/buddypress-woocommerce-vendors" target="_blank">Get it here</a></p><br>';
 	}
 
-	if ( bp_wc_vendors_fs()->is_plan( 'professional' ) && defined( 'WCV_PRO_VERSION') ) {
+	if ( bp_wc_vendors_fs()->is_plan( 'professional' ) && defined( 'WCV_PRO_VERSION' ) ) {
 		$message = '';
 	}
 

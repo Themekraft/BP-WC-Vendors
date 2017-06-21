@@ -3,7 +3,7 @@ Contributors: svenl77, themekraft, buddyforms,
 Tags: multi vendor, marketplace, buddypress, woocommerce, vendor stores, vendors, wc-vendors, wc vendors, wc4bp , buddyforms, marketplace, user, members, profiles, custom post types, taxonomy, frontend posting, frontend editing, revision, review, moderation, frontend editor
 Requires at least: WordPress 3.9
 Tested up to: WordPress 4.7
-Stable tag: 1.1.0.2
+Stable tag: 1.1.0.3
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -144,6 +144,10 @@ We believe that WC Vendors is the best vendor solution on the market and want to
 2. BuddyPress Members View
 
 == Changelog ==
+
+= 1.1.0.3 - Jun 21.2017 =
+There was an issue with users using the lifetime deal not get the pro tabs.
+Fixed some smaller issues
 
 = 1.1.0.2 - Jun 12.2017 =
 Added dismiss functionality to the lifetime admin notice

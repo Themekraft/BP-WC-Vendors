@@ -90,7 +90,7 @@ class BuddyForms_WC_Vendors_Component extends BP_Component {
 			'user_has_access' => bp_is_my_profile()
 		);
 
-		if ( bp_wc_vendors_fs()->is_plan('professional', true) ) {
+		if ( bp_wc_vendors_fs()->is_plan( 'professional' ) ) {
 			if ( ! isset( $bp_wc_vendors_options['tab_products_disabled'] ) && defined( 'WCV_PRO_VERSION' ) ) {
 
 				$sub_nav[] = array(
@@ -104,7 +104,7 @@ class BuddyForms_WC_Vendors_Component extends BP_Component {
 				);
 			}
 		}
-		if ( bp_wc_vendors_fs()->is_plan('professional', true) ) {
+		if ( bp_wc_vendors_fs()->is_plan( 'professional' ) ) {
 			if ( ! isset( $bp_wc_vendors_options['tab_orders_disabled'] ) && defined( 'WCV_PRO_VERSION') ) {
 				$sub_nav[] = array(
 					'name'            => __( 'Orders', 'wcvendors' ),
@@ -130,7 +130,7 @@ class BuddyForms_WC_Vendors_Component extends BP_Component {
 			);
 		}
 
-		if ( bp_wc_vendors_fs()->is_plan('professional', true) ) {
+		if ( bp_wc_vendors_fs()->is_plan( 'professional' ) ) {
 			if ( ! isset( $bp_wc_vendors_options['tab_ratings_disabled'] ) && defined( 'WCV_PRO_VERSION') ) {
 				$sub_nav[] = array(
 					'name'            => __( 'Ratings', 'wcvendors' ),
@@ -143,7 +143,7 @@ class BuddyForms_WC_Vendors_Component extends BP_Component {
 				);
 			}
 		}
-		if ( bp_wc_vendors_fs()->is_plan('professional', true) && defined( 'WCV_PRO_VERSION' ) ) {
+		if ( bp_wc_vendors_fs()->is_plan( 'professional' ) && defined( 'WCV_PRO_VERSION' ) ) {
 			if ( ! isset( $bp_wc_vendors_options['tab_coupons_disabled'] ) ) {
 				$sub_nav[] = array(
 					'name'            => __( 'Coupons', 'wcvendors' ),
