@@ -53,7 +53,7 @@ class BP_WC_Vendors {
 		add_action( 'wp_enqueue_scripts', array( $this, 'bp_wcv_front_js_css' ), 1, 10 );
 
 		// Load the BuddyPress needed files and create the BP WC Vendors Component
-		add_action( 'bp_setup_components', array( $this, 'bp_wc_vendors_bp_init' ), 10 );
+		add_action( 'bp_setup_components', array( $this, 'bp_wcv_bp_init' ), 10 );
 
 	}
 
@@ -129,7 +129,7 @@ class BP_WC_Vendors {
 	 */
 	function bp_wcv_admin_css( $hook_suffix ) {
 
-		if($hook_suffix == 'toplevel_page_bp_wc_vendors_screen') {
+		if($hook_suffix == 'toplevel_page_bp_wcv_screen') {
 			wp_enqueue_style( 'bp_wcv_wp_admin_css', plugins_url('/assets/admin/css/admin.css', __FILE__) );
 		}
 		if($hook_suffix == 'bp-wc-vendors_page_bp_wcv_welcome_screen') {
@@ -145,7 +145,7 @@ class BP_WC_Vendors {
 	 */
 	function bp_wcv_admin_js( $hook_suffix ) {
 
-		if($hook_suffix != 'toplevel_page_bp_wc_vendors_screen') {
+		if($hook_suffix != 'toplevel_page_bp_wcv_screen') {
 			return;
 		}
 		wp_enqueue_script( 'bp_wcv_wp_admin_js', plugins_url('/assets/admin/js/admin.js', __FILE__) );
@@ -160,17 +160,17 @@ class BP_WC_Vendors {
 	function bp_wcv_front_js_css() {
 	}
 
-	function bp_wc_vendors_bp_init() {
+	function bp_wcv_bp_init() {
 		global $bp;
 
 		require( dirname( __FILE__ ) . '/includes/bp-wc-vendors-members-component.php' );
-		$bp->bp_wc_vendors = new BuddyForms_WC_Vendors_Component();
+		$bp->bp_wcv = new BuddyForms_WC_Vendors_Component();
 
 	}
 
 }
 
-$GLOBALS['BP_WC_Vendors'] = new BP_WC_Vendors();
+$GLOBALS['bp_wcv'] = new BP_WC_Vendors();
 
 
 //
@@ -250,14 +250,14 @@ add_action( 'init', function () {
 }, 0, 1 );
 
 // Create a helper function for easy SDK access.
-function bp_wc_vendors_fs() {
-	global $bp_wc_vendors_fs;
+function bp_wcv_fs() {
+	global $bp_wcv_fs;
 
-	if ( ! isset( $bp_wc_vendors_fs ) ) {
+	if ( ! isset( $bp_wcv_fs ) ) {
 		// Include Freemius SDK.
 		require_once dirname(__FILE__) . '/includes/resources/freemius/start.php';
 
-		$bp_wc_vendors_fs = fs_dynamic_init( array(
+		$bp_wcv_fs = fs_dynamic_init( array(
 			'id'                  => '416',
 			'slug'                => 'bp-wc-vendors',
 			'type'                => 'plugin',
@@ -268,7 +268,7 @@ function bp_wc_vendors_fs() {
 			'has_addons'          => true,
 			'has_paid_plans'      => true,
 			'menu'                => array(
-				'slug'           => 'bp_wc_vendors_screen',
+				'slug'           => 'bp_wcv_screen',
 				'override_exact' => true,
 				'first-path'     => 'admin.php?page=bp_wcv_welcome_screen',
 				'support'        => false,
@@ -276,25 +276,25 @@ function bp_wc_vendors_fs() {
 		) );
 	}
 
-	return $bp_wc_vendors_fs;
+	return $bp_wcv_fs;
 }
 
 // Init Freemius.
-bp_wc_vendors_fs();
+bp_wcv_fs();
 // Signal that SDK was initiated.
-do_action( 'bp_wc_vendors_fs_loaded' );
+do_action( 'bp_wcv_fs_loaded' );
 
-function bp_wc_vendors_fs_settings_url() {
-	return admin_url( 'admin.php?page=bp_wc_vendors_screen' );
+function bp_wcv_fs_settings_url() {
+	return admin_url( 'admin.php?page=bp_wcv_screen' );
 }
 
-bp_wc_vendors_fs()->add_filter( 'connect_url', 'bp_wc_vendors_fs_settings_url' );
-bp_wc_vendors_fs()->add_filter( 'after_skip_url', 'bp_wc_vendors_fs_settings_url' );
-bp_wc_vendors_fs()->add_filter( 'after_connect_url', 'bp_wc_vendors_fs_settings_url' );
+bp_wcv_fs()->add_filter( 'connect_url', 'bp_wcv_fs_settings_url' );
+bp_wcv_fs()->add_filter( 'after_skip_url', 'bp_wcv_fs_settings_url' );
+bp_wcv_fs()->add_filter( 'after_connect_url', 'bp_wcv_fs_settings_url' );
 
-function bp_wc_vendors_special_admin_notice() {
+function bp_wcv_special_admin_notice() {
 	$user_id = get_current_user_id();
-	if ( ! get_user_meta( $user_id, 'bp_wc_vendors_special_admin_notice_dismissed' ) ) {
+	if ( ! get_user_meta( $user_id, 'bp_wcv_special_admin_notice_dismissed' ) ) {
 		?>
         <div class="notice notice-success is-dismissible">
             <h4 style="margin-top: 20px;">BUILD THE ULTIMATE BUDDYPRESS MARKETPLACE</h4>
@@ -314,18 +314,18 @@ function bp_wc_vendors_special_admin_notice() {
                    target="_blank"><s>&dollar;299</s> &dollar;99 LIFETIME DEAL</a>
                 <a class="button xbutton-primary"
                    style="font-size: 15px; padding: 8px 20px; height: auto; line-height: 1;"
-                   href="?bp_wc_vendors_special_admin_notice_dismissed">Dismiss</a>
+                   href="?bp_wcv_special_admin_notice_dismissed">Dismiss</a>
             </p>
         </div>
 		<?php
 	}
 }
-add_action( 'admin_notices', 'bp_wc_vendors_special_admin_notice' );
+add_action( 'admin_notices', 'bp_wcv_special_admin_notice' );
 
-function bp_wc_vendors_special_admin_notice_dismissed() {
+function bp_wcv_special_admin_notice_dismissed() {
 	$user_id = get_current_user_id();
-	if ( isset( $_GET['bp_wc_vendors_special_admin_notice_dismissed'] ) ){
-		add_user_meta( $user_id, 'bp_wc_vendors_special_admin_notice_dismissed', 'true', true );
+	if ( isset( $_GET['bp_wcv_special_admin_notice_dismissed'] ) ){
+		add_user_meta( $user_id, 'bp_wcv_special_admin_notice_dismissed', 'true', true );
 	}
 }
-add_action( 'admin_init', 'bp_wc_vendors_special_admin_notice_dismissed' );
+add_action( 'admin_init', 'bp_wcv_special_admin_notice_dismissed' );

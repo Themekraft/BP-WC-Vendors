@@ -3,7 +3,7 @@
 // Add the Settings Page to the Menu
 //
 function bp_wcv_welcome_screen_menu() {
-	add_submenu_page( 'bp_wc_vendors_screen', __( 'Info', 'bpwcv' ), __( 'Info', 'bpwcv' ), 'manage_options', 'bp_wcv_welcome_screen', 'bp_wcv_welcome_screen_content' );
+	add_submenu_page( 'bp_wcv_screen', __( 'Info', 'bpwcv' ), __( 'Info', 'bpwcv' ), 'manage_options', 'bp_wcv_welcome_screen', 'bp_wcv_welcome_screen_content' );
 }
 add_action( 'admin_menu', 'bp_wcv_welcome_screen_menu', 999 );
 
@@ -19,7 +19,7 @@ function bp_wcv_welcome_screen_content() {
 
       <h2 class="nav-tab-wrapper wp-clearfix">
 				<a href="about.php" class="nav-tab nav-tab-active">What’s New</a>
-				<a href="admin.php?page=bp_wc_vendors_screen-addons" target="_new" title="Browse Add-ons" class="nav-tab">Browse Add-ons</a>
+				<a href="admin.php?page=bp_wcv_screen-addons" target="_new" title="Browse Add-ons" class="nav-tab">Browse Add-ons</a>
 			</h2>
 
 
@@ -62,7 +62,7 @@ function bp_wcv_welcome_screen_content() {
                 <div class="xcol col-big">
                     <h2>Next Step: Set it all up</h2>
                     <p class="lead">
-                        Go to the <a href="<?php echo admin_url('admin.php?page=bp_wc_vendors_screen') ?>" >Plugin Settings</a> and Set up all to your needs. You can find Documentation and Help for the different plugins from the links below.
+                        Go to the <a href="<?php echo admin_url('admin.php?page=bp_wcv_screen') ?>" >Plugin Settings</a> and Set up all to your needs. You can find Documentation and Help for the different plugins from the links below.
                     </p>
 
                 </div>

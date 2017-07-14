@@ -1,6 +1,6 @@
 <?php
-add_action( 'template_redirect', 'bp_wc_vendors_store_redirect_to_profile', 10 );
-function bp_wc_vendors_store_redirect_to_profile() {
+add_action( 'template_redirect', 'bp_wcv_store_redirect_to_profile', 10 );
+function bp_wcv_store_redirect_to_profile() {
 	global $bp, $wp_query, $post;
 
 	$pagename = get_query_var( 'pagename' );
@@ -42,8 +42,8 @@ function bp_wc_vendors_store_redirect_to_profile() {
 		//		return;
 		//	}
 
-		$bp_wc_vendors_options = bp_wc_vendors_get_options();
-		if ( isset( $bp_wc_vendors_options['redirect_vendor_store_to_profil'] ) && $bp_wc_vendors_options['redirect_vendor_store_to_profil'] == false) {
+		$bp_wcv_options = bp_wcv_get_options();
+		if ( isset( $bp_wcv_options['redirect_vendor_store_to_profil'] ) && $bp_wcv_options['redirect_vendor_store_to_profil'] == false) {
 			return;
 		}
 
@@ -60,7 +60,7 @@ function bp_wc_vendors_store_redirect_to_profile() {
 		     || empty($vendor_shop) && get_the_ID() == $pro_dashboard
 		     || empty($vendor_shop) && get_the_ID() == $free_dashboard
 		) {
-			$link = bp_wc_vendors_get_redirect_link( $dashboard_page_id );
+			$link = bp_wcv_get_redirect_link( $dashboard_page_id );
 			wp_safe_redirect( $link );
 			exit;
 		}
@@ -77,7 +77,7 @@ function bp_wc_vendors_store_redirect_to_profile() {
 		return;
 	}
 
-	$link = bp_wc_vendors_get_redirect_link( $post->ID );
+	$link = bp_wcv_get_redirect_link( $post->ID );
 
 	if ( ! empty( $link ) ) :
 		wp_safe_redirect( $link );

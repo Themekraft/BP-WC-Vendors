@@ -1,21 +1,21 @@
 <?php
 // Add the option page to the BP WC Vendors menu
-add_action( 'admin_menu', 'bp_wc_vendors_add_menu' );
-function bp_wc_vendors_add_menu() {
-	$settings_page = add_menu_page( 'BP WC Vendors', 'BP WC Vendors', 'manage_options', 'bp_wc_vendors_screen', 'bp_wc_vendors_screen_function' );
-	add_action( "load-{$settings_page}", 'bp_wc_vendors_tabs_submit' );
+add_action( 'admin_menu', 'bp_wcv_add_menu' );
+function bp_wcv_add_menu() {
+	$settings_page = add_menu_page( 'BP WC Vendors', 'BP WC Vendors', 'manage_options', 'bp_wcv_screen', 'bp_wcv_screen_function' );
+	add_action( "load-{$settings_page}", 'bp_wcv_tabs_submit' );
 }
 
-function bp_wc_vendors_tabs_submit( $get ) {
+function bp_wcv_tabs_submit( $get ) {
     global $current;
 
 	$current = '';
-	$current = isset( $_POST['bp_wc_vendors_options_general_submit'] ) ? 'general' : $current;
-	$current = isset( $_POST['bp_wc_vendors_options_products_submit'] ) ? 'products' : $current;
-	$current = isset( $_POST['bp_wc_vendors_options_links_submit'] ) ? 'links' : $current;
-	$current = isset( $_POST['bp_wc_vendors_options_redirects_submit'] ) ? 'redirects' : $current;
-	$current = isset( $_POST['bp_wc_vendors_options_signup_submit'] ) ? 'signup' : $current;
-	$current = isset( $_POST['bp_wc_vendors_options_roles_submit'] ) ? 'roles' : $current;
+	$current = isset( $_POST['bp_wcv_options_general_submit'] ) ? 'general' : $current;
+	$current = isset( $_POST['bp_wcv_options_products_submit'] ) ? 'products' : $current;
+	$current = isset( $_POST['bp_wcv_options_links_submit'] ) ? 'links' : $current;
+	$current = isset( $_POST['bp_wcv_options_redirects_submit'] ) ? 'redirects' : $current;
+	$current = isset( $_POST['bp_wcv_options_signup_submit'] ) ? 'signup' : $current;
+	$current = isset( $_POST['bp_wcv_options_roles_submit'] ) ? 'roles' : $current;
 
 	if( empty( $current ) ){
 		return;
@@ -23,21 +23,21 @@ function bp_wc_vendors_tabs_submit( $get ) {
 
     check_admin_referer( "bp-wc-vendors-settings-page" );
 
-    $bp_wc_vendors_options = get_option( 'bp_wc_vendors_options' );
+    $bp_wcv_options = get_option( 'bp_wcv_options' );
 
-    if ( isset( $_POST['bp_wc_vendors_options'] ) && is_array( $_POST['bp_wc_vendors_options'] ) ) {
-        foreach ( $_POST['bp_wc_vendors_options'] as $key => $bp_wc_vendors_option ) {
-            $bp_wc_vendors_options[ $key ] = $bp_wc_vendors_option;
+    if ( isset( $_POST['bp_wcv_options'] ) && is_array( $_POST['bp_wcv_options'] ) ) {
+        foreach ( $_POST['bp_wcv_options'] as $key => $bp_wcv_option ) {
+            $bp_wcv_options[ $key ] = $bp_wcv_option;
         }
     } else {
-        unset($bp_wc_vendors_options[$current]);
+        unset($bp_wcv_options[$current]);
     }
 
-    update_option( 'bp_wc_vendors_options', $bp_wc_vendors_options );
+    update_option( 'bp_wcv_options', $bp_wcv_options );
 
 
 
-    wp_redirect( admin_url( 'admin.php?page=bp_wc_vendors_screen&updated=true&tab=' . $current ) );
+    wp_redirect( admin_url( 'admin.php?page=bp_wcv_screen&updated=true&tab=' . $current ) );
     exit;
 }
 
@@ -49,10 +49,10 @@ function bp_wc_vendors_tabs_submit( $get ) {
  * @since 1.3
  */
 
-function bp_wc_vendors_screen_function() {
+function bp_wcv_screen_function() {
 	global $pagenow, $buddyforms, $current;
 
-	$bp_wc_vendors_options = get_option( 'bp_wc_vendors_options' );
+	$bp_wcv_options = get_option( 'bp_wcv_options' );
 
 	if( isset( $_GET['tab'] ) ){
 	    $current = $_GET['tab'];
@@ -71,7 +71,7 @@ function bp_wc_vendors_screen_function() {
 
 		$tabs = array( 'general' => 'Dashboard Tabs', 'roles' => 'Roles', 'products' => 'Product Creation', 'links' => 'Deactivate Links', 'redirects' => 'Redirects', 'signup' => 'Sign up Forms', 'go_pro' => '<font color="#b22222">Go Professional!!!</font>');
 
-        if ( bp_wc_vendors_fs()->is_plan__premium_only('professional') ) {
+        if ( bp_wcv_fs()->is_plan__premium_only('professional') ) {
 	        unset($tabs['go_pro']);
         }
 
@@ -80,13 +80,13 @@ function bp_wc_vendors_screen_function() {
 		echo '<h2 class="nav-tab-wrapper" style="padding-bottom: 0;">';
 		foreach ( $tabs as $tab => $name ) {
 			$class = ( $tab == $current ) ? ' nav-tab-active' : '';
-			echo "<a class='nav-tab$class' href='admin.php?page=bp_wc_vendors_screen&tab=$tab'>$name</a>";
+			echo "<a class='nav-tab$class' href='admin.php?page=bp_wcv_screen&tab=$tab'>$name</a>";
 
 		}
 		echo '</h2>';
 
 		?>
-        <form method="post" action="?page=bp_wc_vendors_screen">
+        <form method="post" action="?page=bp_wcv_screen">
             <div id="post-body-content">
 				<?php
 
@@ -95,7 +95,7 @@ function bp_wc_vendors_screen_function() {
 					echo '<div class="updated" ><p>Settings updated.</p></div>';
 				}
 
-				if ( $pagenow == 'admin.php' && $_GET['page'] == 'bp_wc_vendors_screen' ) {
+				if ( $pagenow == 'admin.php' && $_GET['page'] == 'bp_wcv_screen' ) {
 
 				if ( isset ( $_GET['tab'] ) ) {
 					$tab = $_GET['tab'];
@@ -112,8 +112,8 @@ function bp_wc_vendors_screen_function() {
                                 <td>
                                     <?php bp_wcv_disabled_message(); ?>
 
-	                                <?php isset( $bp_wc_vendors_options['general']['tab_settings_disabled'] ) ? $tab_settings_disabled = $bp_wc_vendors_options['general']['tab_settings_disabled'] : $tab_settings_disabled = 0; ?>
-                                    <p <?php bp_wcv_pro() ?>><input <?php bp_wcv_disabled() ?> name='bp_wc_vendors_options[general][tab_settings_disabled]' type='checkbox' value='1' <?php checked( $tab_settings_disabled, 1 ); ?> /> <b>Turn off "Settings" tab </b>
+	                                <?php isset( $bp_wcv_options['general']['tab_settings_disabled'] ) ? $tab_settings_disabled = $bp_wcv_options['general']['tab_settings_disabled'] : $tab_settings_disabled = 0; ?>
+                                    <p <?php bp_wcv_pro() ?>><input <?php bp_wcv_disabled() ?> name='bp_wcv_options[general][tab_settings_disabled]' type='checkbox' value='1' <?php checked( $tab_settings_disabled, 1 ); ?> /> <b>Turn off "Settings" tab </b>
                                     </p>
                                 </td>
                             </tr>
@@ -121,52 +121,53 @@ function bp_wc_vendors_screen_function() {
                                 <th><label for="">Pro Dashboard Tabs</label></th>
                                 <td>
 
-	                                <?php $tab_orders_disabled = isset( $bp_wc_vendors_options['general']['tab_orders_disabled'] ) ? $bp_wc_vendors_options['general']['tab_orders_disabled'] : 0; ?>
-                                    <p <?php bp_wcv_pro() ?>><input name='bp_wc_vendors_options[general][tab_orders_disabled]' type='checkbox' <?php bp_wcv_disabled() ?> value='1' <?php checked( $tab_orders_disabled, 1 ); ?> />
+	                                <?php $tab_orders_disabled = isset( $bp_wcv_options['general']['tab_orders_disabled'] ) ? $bp_wcv_options['general']['tab_orders_disabled'] : 0; ?>
+                                    <p <?php bp_wcv_pro() ?>><input name='bp_wcv_options[general][tab_orders_disabled]' type='checkbox' <?php bp_wcv_disabled() ?> value='1' <?php checked( $tab_orders_disabled, 1 ); ?> />
                                         <b>Turn off "Orders" tab </b>
                                     </p>
 
-									<?php $tab_products_disabled =  isset( $bp_wc_vendors_options['general']['tab_products_disabled'] ) ? $bp_wc_vendors_options['general']['tab_products_disabled'] : 0; ?>
-                                    <p <?php bp_wcv_pro() ?>><input name='bp_wc_vendors_options[general][tab_products_disabled]' type='checkbox' <?php bp_wcv_disabled() ?> value='1' <?php checked( $tab_products_disabled, 1 ); ?> />
+									<?php $tab_products_disabled =  isset( $bp_wcv_options['general']['tab_products_disabled'] ) ? $bp_wcv_options['general']['tab_products_disabled'] : 0; ?>
+                                    <p <?php bp_wcv_pro() ?>><input name='bp_wcv_options[general][tab_products_disabled]' type='checkbox' <?php bp_wcv_disabled() ?> value='1' <?php checked( $tab_products_disabled, 1 ); ?> />
                                         <b>Turn off "Products" tab </b>
                                     </p>
 
-									<?php $tab_ratings_disabled = isset( $bp_wc_vendors_options['general']['tab_ratings_disabled'] ) ? $bp_wc_vendors_options['general']['tab_ratings_disabled'] : 0; ?>
-                                    <p <?php bp_wcv_pro() ?>><input name='bp_wc_vendors_options[general][tab_ratings_disabled]' type='checkbox' <?php bp_wcv_disabled() ?> value='1' <?php checked( $tab_ratings_disabled, 1 ); ?> />
+									<?php $tab_ratings_disabled = isset( $bp_wcv_options['general']['tab_ratings_disabled'] ) ? $bp_wcv_options['general']['tab_ratings_disabled'] : 0; ?>
+                                    <p <?php bp_wcv_pro() ?>><input name='bp_wcv_options[general][tab_ratings_disabled]' type='checkbox' <?php bp_wcv_disabled() ?> value='1' <?php checked( $tab_ratings_disabled, 1 ); ?> />
                                         <b>Turn off "Ratings" tab </b>
                                     </p>
 
-									<?php $tab_coupons_disabled = isset( $bp_wc_vendors_options['general']['tab_coupons_disabled'] ) ? $bp_wc_vendors_options['general']['tab_coupons_disabled'] : 0; ?>
-                                    <p <?php bp_wcv_pro() ?>><input name='bp_wc_vendors_options[general][tab_coupons_disabled]' type='checkbox' <?php bp_wcv_disabled() ?> value='1' <?php checked( $tab_coupons_disabled, 1 ); ?> />
+									<?php $tab_coupons_disabled = isset( $bp_wcv_options['general']['tab_coupons_disabled'] ) ? $bp_wcv_options['general']['tab_coupons_disabled'] : 0; ?>
+                                    <p <?php bp_wcv_pro() ?>><input name='bp_wcv_options[general][tab_coupons_disabled]' type='checkbox' <?php bp_wcv_disabled() ?> value='1' <?php checked( $tab_coupons_disabled, 1 ); ?> />
                                         <b>Turn off "Coupons" tab </b>
                                     </p>
 
                                 </td>
                             </tr>
                         </table>
-                        <input type="submit" value="Save" name="bp_wc_vendors_options_general_submit" class="button">
+                        <input type="submit" value="Save" name="bp_wcv_options_general_submit" class="button">
 						<?php
 						break;
 					case 'roles' : ?>
                         <table class="form-table">
                             <tr>
-                                <th><label for="">Add Vendor as Member Type</th>
+                                <th><label for="">Add Vendor as Member Type</label>
+                                </th>
                                 <td>
 
-	                                   <?php $vendor_role = isset( $bp_wc_vendors_options['roles']['vendor'] ) ? $bp_wc_vendors_options['roles']['vendor'] : 0; ?>
-                                    <p><input name='bp_wc_vendors_options[roles][vendor]' type='checkbox'
+	                                   <?php $vendor_role = isset( $bp_wcv_options['roles']['vendor'] ) ? $bp_wcv_options['roles']['vendor'] : 0; ?>
+                                    <p><input name='bp_wcv_options[roles][vendor]' type='checkbox'
                                               value='1' <?php checked( $vendor_role, 1 ); ?> /> Create new Member Type "Vendor" for all Vendors </p>
 
-	                                <?php $vendor_directory = isset( $bp_wc_vendors_options['roles']['vendor_directory'] ) ? $bp_wc_vendors_options['roles']['vendor_directory'] : 0; ?>
-                                    <p><input name='bp_wc_vendors_options[roles][vendor_directory]' type='checkbox'
+	                                <?php $vendor_directory = isset( $bp_wcv_options['roles']['vendor_directory'] ) ? $bp_wcv_options['roles']['vendor_directory'] : 0; ?>
+                                    <p <?php bp_wcv_pro() ?>><input name='bp_wcv_options[roles][vendor_directory]' type='checkbox' <?php bp_wcv_disabled() ?>
                                               value='1' <?php checked( $vendor_directory, 1 ); ?> /> Create a "Vendor Directory" </p>
 
-	                                <?php $vendor_directory_name = isset( $bp_wc_vendors_options['roles']['vendor_name'] ) ? $bp_wc_vendors_options['roles']['vendor_directory_name'] : __( 'Vendors', 'bpwcv' ); ?>
-                                    <p><label>Directory Name: </label><input name='bp_wc_vendors_options[roles][vendor_directory_name]' type='text'
+	                                <?php $vendor_directory_name = isset( $bp_wcv_options['roles']['vendor_name'] ) ? $bp_wcv_options['roles']['vendor_directory_name'] : __( 'Vendors', 'bpwcv' ); ?>
+                                    <p <?php bp_wcv_pro() ?>><label>Directory Name: </label><input name='bp_wcv_options[roles][vendor_directory_name]' type='text' <?php bp_wcv_disabled() ?>
                                               value='<?php echo $vendor_directory_name ?>' /></p>
 
-	                                <?php $vendor_directory_name_singular = isset( $bp_wc_vendors_options['roles']['vendor_name_singular'] ) ? $bp_wc_vendors_options['roles']['vendor_directory_name_singular'] : __( 'Vendor', 'bpwcv' ); ?>
-                                    <p><label>Directory Name Singular: </label><input name='bp_wc_vendors_options[roles][vendor_directory_name_singular]' type='text'
+	                                <?php $vendor_directory_name_singular = isset( $bp_wcv_options['roles']['vendor_name_singular'] ) ? $bp_wcv_options['roles']['vendor_directory_name_singular'] : __( 'Vendor', 'bpwcv' ); ?>
+                                    <p <?php bp_wcv_pro() ?>><label>Directory Name Singular: </label><input name='bp_wcv_options[roles][vendor_directory_name_singular]' type='text' <?php bp_wcv_disabled() ?>
                                               value='<?php echo $vendor_directory_name_singular ?>' /></p>
 
 
@@ -176,7 +177,7 @@ function bp_wc_vendors_screen_function() {
                                    <hr>
                         <table class="form-table">
                             <tr>
-                                <th><label for="">Member Types Vendors</th>
+                                <th><label for="">Member Types Vendors</label></th>
                                 <td>
                                     <?php
                                     $member_types = bp_get_member_types();
@@ -186,16 +187,17 @@ function bp_wc_vendors_screen_function() {
                                             continue;
                                         }
 
-                                        $vendor_role = isset( $bp_wc_vendors_options['roles']['member_types'][$member_type] ) ? $bp_wc_vendors_options['roles']['member_types'][$member_type] : 0; ?>
-                                        <p><input name='bp_wc_vendors_options[roles][member_types][<?php echo $member_type ?>]' type='checkbox'
+                                        $vendor_role = isset( $bp_wcv_options['roles']['member_types'][$member_type] ) ? $bp_wcv_options['roles']['member_types'][$member_type] : 0; ?>
+                                        <p <?php bp_wcv_pro() ?>><input name='bp_wcv_options[roles][member_types][<?php echo $member_type ?>]' type='checkbox' <?php bp_wcv_disabled() ?>
                                               value='1' <?php checked( $vendor_role, 1 ); ?> /> <b><?php echo $member_type ?></b></p>
                                         <?php
                                     }
                                     ?>
+                                    <p>Selected Member Types will become Vendors </p>
                                 </td>
                             </tr>
                         </table>
-                        <input type="submit" value="Save" name="bp_wc_vendors_options_roles_submit" class="button">
+                        <input type="submit" value="Save" name="bp_wcv_options_roles_submit" class="button">
 						<?php
 						break;
 					case 'products': ?>
@@ -224,7 +226,7 @@ function bp_wc_vendors_screen_function() {
                                 </td>
                             </tr>
                         </table>
-                        <input type="submit" value="Save" name="bp_wc_vendors_options_products_submit" class="button">
+                        <input type="submit" value="Save" name="bp_wcv_options_products_submit" class="button">
 						<?php
 						break;
 					case 'links' : ?>
@@ -233,8 +235,8 @@ function bp_wc_vendors_screen_function() {
                                 <th><label for="">Deactivate Links</th>
                                 <td>
                                     <p>Deactivate the "Visit Store" link in the BuddyPress Members Profile Headder</p>
-									<?php $visit_store_disabled = isset( $bp_wc_vendors_options['links']['visit_store_disabled'] ) ? $bp_wc_vendors_options['links']['visit_store_disabled'] : 0; ?>
-                                    <p><input name='bp_wc_vendors_options[links][visit_store_disabled]' type='checkbox'
+									<?php $visit_store_disabled = isset( $bp_wcv_options['links']['visit_store_disabled'] ) ? $bp_wcv_options['links']['visit_store_disabled'] : 0; ?>
+                                    <p><input name='bp_wcv_options[links][visit_store_disabled]' type='checkbox'
                                               value='1' <?php checked( $visit_store_disabled, 1 ); ?> /> <b>Disable
                                             "Visit
                                             Store" Link</b></p>
@@ -242,22 +244,22 @@ function bp_wc_vendors_screen_function() {
                                     <p>Deactivate the "Profile Links" in the Vendor Shop Product listings and Products
                                         Single
                                         Views</p>
-									<?php $view_profile_disabled = isset( $bp_wc_vendors_options['links']['view_profile_disabled'] ) ? $bp_wc_vendors_options['links']['view_profile_disabled'] : 0; ?>
-                                    <p><input name='bp_wc_vendors_options[links][view_profile_disabled]' type='checkbox'
+									<?php $view_profile_disabled = isset( $bp_wcv_options['links']['view_profile_disabled'] ) ? $bp_wcv_options['links']['view_profile_disabled'] : 0; ?>
+                                    <p><input name='bp_wcv_options[links][view_profile_disabled]' type='checkbox'
                                               value='1' <?php checked( $view_profile_disabled, 1 ); ?> /> <b>Disable
                                             "View
                                             Profile" Link</b></p>
                                     <br>
                                     <p>Deactivate the "Sold by" links in the Product Listings and Single View</p>
-									<?php $sold_by_disabled = isset( $bp_wc_vendors_options['links']['sold_by_disabled'] ) ? $bp_wc_vendors_options['links']['sold_by_disabled'] :  0; ?>
-                                    <p><input name='bp_wc_vendors_options[links][sold_by_disabled]' type='checkbox'
+									<?php $sold_by_disabled = isset( $bp_wcv_options['links']['sold_by_disabled'] ) ? $bp_wcv_options['links']['sold_by_disabled'] :  0; ?>
+                                    <p><input name='bp_wcv_options[links][sold_by_disabled]' type='checkbox'
                                               value='1' <?php checked( $sold_by_disabled, 1 ); ?> /> <b>Disable "Sold
                                             by"
                                             Link</b></p>
                                     <br>
                                     <p>Deactivate the "Contact Vendor" links in the Product Single View</p>
-									<?php $contact_vendor_disabled = isset( $bp_wc_vendors_options['links']['contact_vendor_disabled'] ) ? $bp_wc_vendors_options['links']['contact_vendor_disabled'] : 0; ?>
-                                    <p><input name='bp_wc_vendors_options[links][contact_vendor_disabled]' type='checkbox'
+									<?php $contact_vendor_disabled = isset( $bp_wcv_options['links']['contact_vendor_disabled'] ) ? $bp_wcv_options['links']['contact_vendor_disabled'] : 0; ?>
+                                    <p><input name='bp_wcv_options[links][contact_vendor_disabled]' type='checkbox'
                                               value='1' <?php checked( $contact_vendor_disabled, 1 ); ?> /> <b>Disable
                                             "Contact
                                             Vendor" Link</b></p>
@@ -265,7 +267,7 @@ function bp_wc_vendors_screen_function() {
                                 </td>
                             </tr>
                         </table>
-                        <input type="submit" value="Save" name="bp_wc_vendors_options_links_submit" class="button">
+                        <input type="submit" value="Save" name="bp_wcv_options_links_submit" class="button">
 						<?php
 						break;
 					case 'redirects': ?>
@@ -279,8 +281,8 @@ function bp_wc_vendors_screen_function() {
                                         dashboard to "only administrators can access the /wp-admin/ dashboard".
                                     <p>
                                         <br>
-										<?php $no_admin_access = isset( $bp_wc_vendors_options['redirects']['no_admin_access'] ) ? $bp_wc_vendors_options['redirects']['no_admin_access'] : 0; ?>
-                                    <p><input name='bp_wc_vendors_options[redirects][no_admin_access]' type='checkbox'
+										<?php $no_admin_access = isset( $bp_wcv_options['redirects']['no_admin_access'] ) ? $bp_wcv_options['redirects']['no_admin_access'] : 0; ?>
+                                    <p><input name='bp_wcv_options[redirects][no_admin_access]' type='checkbox'
                                               value='1' <?php checked( $no_admin_access, 1 ); ?> /> <b>Turn off the
                                             redirect and
                                             enable admin back-end access. </b></p>
@@ -292,8 +294,8 @@ function bp_wc_vendors_screen_function() {
                                 <th><label for="">Vendor Store Settings</label></th>
                                 <td>
                                     <p>Redirect the Vendor Store to the BuddyPress Vendor Profile</p>
-									<?php $redirect_vendor_store_to_profil = isset( $bp_wc_vendors_options['redirects']['redirect_vendor_store_to_profil'] ) ? $bp_wc_vendors_options['redirects']['redirect_vendor_store_to_profil'] : 0; ?>
-                                    <p><input name='bp_wc_vendors_options[redirects][redirect_vendor_store_to_profil]'
+									<?php $redirect_vendor_store_to_profil = isset( $bp_wcv_options['redirects']['redirect_vendor_store_to_profil'] ) ? $bp_wcv_options['redirects']['redirect_vendor_store_to_profil'] : 0; ?>
+                                    <p><input name='bp_wcv_options[redirects][redirect_vendor_store_to_profil]'
                                               type='checkbox'
                                               value='1' <?php checked( $redirect_vendor_store_to_profil, 1 ); ?> /> <b>Redirect
                                             Vendor Store to Profile</b></p>
@@ -301,7 +303,7 @@ function bp_wc_vendors_screen_function() {
                                 </td>
                             </tr>
                         </table>
-                        <input type="submit" value="Save" name="bp_wc_vendors_options_redirects_submit" class="button">
+                        <input type="submit" value="Save" name="bp_wcv_options_redirects_submit" class="button">
 						<?php
 						break;
 					case 'signup': ?>
@@ -355,11 +357,11 @@ function bp_wc_vendors_screen_function() {
                                 </td>
                             </tr>
                         </table>
-                        <input type="submit" value="Save" name="bp_wc_vendors_options_signup_submit" class="button">
+                        <input type="submit" value="Save" name="bp_wcv_options_signup_submit" class="button">
 						<?php
 						break;
                     case 'go_pro':
-	                    wp_redirect( admin_url( 'admin.php?page=bp_wc_vendors_screen-pricing' ) );
+	                    wp_redirect( admin_url( 'admin.php?page=bp_wcv_screen-pricing' ) );
                         break;
 				}
 				?>
@@ -374,7 +376,7 @@ function bp_wcv_pro() {
 
 	$class = 'class="bp-wc-vendors-disabled"';
 
-	if ( bp_wc_vendors_fs()->is_plan( 'professional' ) && defined( 'WCV_PRO_VERSION' ) ) {
+	if ( bp_wcv_fs()->is_plan( 'professional' ) && defined( 'WCV_PRO_VERSION' ) ) {
 		$class = "";
 	}
 
@@ -384,7 +386,7 @@ function bp_wcv_pro() {
 function bp_wcv_disabled() {
 	$disabled = 'disabled';
 
-	if ( bp_wc_vendors_fs()->is_plan( 'professional' ) && defined( 'WCV_PRO_VERSION' ) ) {
+	if ( bp_wcv_fs()->is_plan( 'professional' ) && defined( 'WCV_PRO_VERSION' ) ) {
 		$disabled = "";
 	}
 
@@ -398,11 +400,11 @@ function bp_wcv_disabled_message() {
 		$message .= '<p><b>WC Vendors Pro</b> You need the WC Vendors Pro Version to change this settings: <a href="https://www.wcvendors.com/product/wc-vendors-pro/" target="_blank">Get it here</a></p><br>';
 	}
 
-	if ( !bp_wc_vendors_fs()->is_plan( 'professional' ) ) {
+	if ( !bp_wcv_fs()->is_plan( 'professional' ) ) {
 		$message .= '<p><b>BP WC Vendors Pro</b>  You need the BP WC Vendors Pro Version to change this settings: <a href="https://themekraft.com/products/buddypress-woocommerce-vendors" target="_blank">Get it here</a></p><br>';
 	}
 
-	if ( bp_wc_vendors_fs()->is_plan( 'professional' ) && defined( 'WCV_PRO_VERSION' ) ) {
+	if ( bp_wcv_fs()->is_plan( 'professional' ) && defined( 'WCV_PRO_VERSION' ) ) {
 		$message = '';
 	}
 

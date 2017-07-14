@@ -1,12 +1,12 @@
 <?php
 
 /* WC Vendors Pro Only - Adds View Store button to BuddyPress profiles */
-add_action( 'bp_member_header_actions', 'bp_wc_vendors_bp_member_header_actions' );
-function bp_wc_vendors_bp_member_header_actions() {
+add_action( 'bp_member_header_actions', 'bp_wcv_bp_member_header_actions' );
+function bp_wcv_bp_member_header_actions() {
 
-	$bp_wc_vendors_options = bp_wc_vendors_get_options();
+	$bp_wcv_options = bp_wcv_get_options();
 
-	if ( isset( $bp_wc_vendors_options['visit_store_disabled'] ) ) {
+	if ( isset( $bp_wcv_options['visit_store_disabled'] ) ) {
 		return;
 	}
 
@@ -30,12 +30,12 @@ function bp_wc_vendors_bp_member_header_actions() {
 }
 
 /* WC Vendors Pro - Adds a View Profile link on the vendors store header */
-add_action( 'wcv_after_main_header', 'bp_wc_vendors_after_vendor_store_title' );
-function bp_wc_vendors_after_vendor_store_title() {
+add_action( 'wcv_after_main_header', 'bp_wcv_after_vendor_store_title' );
+function bp_wcv_after_vendor_store_title() {
 
-	$bp_wc_vendors_options = bp_wc_vendors_get_options();
+	$bp_wcv_options = bp_wcv_get_options();
 
-	if ( isset( $bp_wc_vendors_options['view_profile_disabled'] ) ) {
+	if ( isset( $bp_wcv_options['view_profile_disabled'] ) ) {
 		return;
 	}
 
@@ -46,10 +46,10 @@ function bp_wc_vendors_after_vendor_store_title() {
 }
 
 /* WC Vendors Pro - Adds a link to Profile on Single Product Pages */
-add_action( 'woocommerce_product_meta_start', 'bp_wc_vendors_link_woocommerce_product_meta_start' );
-function bp_wc_vendors_link_woocommerce_product_meta_start() {
-	$bp_wc_vendors_options = bp_wc_vendors_get_options();
-	if ( isset( $bp_wc_vendors_options['view_profile_disabled'] ) ) {
+add_action( 'woocommerce_product_meta_start', 'bp_wcv_link_woocommerce_product_meta_start' );
+function bp_wcv_link_woocommerce_product_meta_start() {
+	$bp_wcv_options = bp_wcv_get_options();
+	if ( isset( $bp_wcv_options['view_profile_disabled'] ) ) {
 		return;
 	}
 
@@ -59,14 +59,14 @@ function bp_wc_vendors_link_woocommerce_product_meta_start() {
 }
 
 /* WC Vendors Pro - Adds a "Contact Vendor" link on Single Product Pages which uses BuddyPress Private Messages */
-add_action( 'woocommerce_product_meta_start', 'bp_wc_vendors_bpmail_woocommerce_product_meta_start' );
-function bp_wc_vendors_bpmail_woocommerce_product_meta_start() {
+add_action( 'woocommerce_product_meta_start', 'bp_wcv_bpmail_woocommerce_product_meta_start' );
+function bp_wcv_bpmail_woocommerce_product_meta_start() {
 	if ( ! function_exists( 'bp_get_messages_slug' ) ) {
 		return;
 	}
 
-	$bp_wc_vendors_options = bp_wc_vendors_get_options();
-	if ( isset( $bp_wc_vendors_options['contact_vendor_disabled'] ) ) {
+	$bp_wcv_options = bp_wcv_get_options();
+	if ( isset( $bp_wcv_options['contact_vendor_disabled'] ) ) {
 		return;
 	}
 
@@ -80,11 +80,11 @@ function bp_wc_vendors_bpmail_woocommerce_product_meta_start() {
 	}
 }
 
-add_action( 'init', 'bp_wc_vendors_disable_sold_by', 9999 );
-function bp_wc_vendors_disable_sold_by() {
+add_action( 'init', 'bp_wcv_disable_sold_by', 9999 );
+function bp_wcv_disable_sold_by() {
 
-	$bp_wc_vendors_options = bp_wc_vendors_get_options();
-	if ( ! isset( $bp_wc_vendors_options['sold_by_disabled'] ) ) {
+	$bp_wcv_options = bp_wcv_get_options();
+	if ( ! isset( $bp_wcv_options['sold_by_disabled'] ) ) {
 		return;
 	}
 
@@ -92,8 +92,8 @@ function bp_wc_vendors_disable_sold_by() {
 	remove_action( 'woocommerce_after_shop_loop_item', array( 'WCV_Vendor_Shop', 'template_loop_sold_by' ), 9, 2 );
 }
 
-add_action( 'buddyforms_the_loop_item_last', 'bp_wc_vendors_buddyforms_the_loop_actions', 10, 1 );
-function bp_wc_vendors_buddyforms_the_loop_actions( $post_id ) {
+add_action( 'buddyforms_the_loop_item_last', 'bp_wcv_buddyforms_the_loop_actions', 10, 1 );
+function bp_wcv_buddyforms_the_loop_actions( $post_id ) {
 
 	if( get_post_type( $post_id ) != 'product'){
 		return;
