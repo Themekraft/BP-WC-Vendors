@@ -3,7 +3,7 @@
  Plugin Name: BP WC Vendors
  Plugin URI: https://themekraft.com/products/bp-wc-vendors/
  Description: Integrates the WC Vendors Pro Plugin With BuddyPress
- Version: 1.1.0.3
+ Version: 1.1.1
  Author: ThemeKraft
  Author URI: http://themekraft.com/
  License: GPLv3 or later
@@ -34,7 +34,7 @@ class BP_WC_Vendors {
 	/**
 	 * @var string
 	 */
-	public $version = '1.1.0.3';
+	public $version = '1.1.1';
 
 	/**
 	 * Initiate the class
@@ -320,7 +320,7 @@ function bp_wcv_special_admin_notice() {
 		<?php
 	}
 }
-add_action( 'admin_notices', 'bp_wcv_special_admin_notice' );
+//add_action( 'admin_notices', 'bp_wcv_special_admin_notice' );
 
 function bp_wcv_special_admin_notice_dismissed() {
 	$user_id = get_current_user_id();
@@ -328,4 +328,4 @@ function bp_wcv_special_admin_notice_dismissed() {
 		add_user_meta( $user_id, 'bp_wcv_special_admin_notice_dismissed', 'true', true );
 	}
 }
-add_action( 'admin_init', 'bp_wcv_special_admin_notice_dismissed' );
+//add_action( 'admin_init', 'bp_wcv_special_admin_notice_dismissed' );
