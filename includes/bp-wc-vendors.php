@@ -55,7 +55,7 @@ function bp_wc_vendors_link_woocommerce_product_meta_start() {
 
 	$wcv_profile_id = get_the_author_meta( 'ID' );
 	$profile_url    = bp_core_get_user_domain( $wcv_profile_id );
-	echo 'Vendor Profile: <a href="' . $profile_url . '">View My Profile</a>';
+	echo __('Vendor Profile:', 'bpwcv') .  '<a href="' . $profile_url . '">' . __( 'View My Profile', 'bpwcv' ) . '</a>';
 }
 
 /* WC Vendors Pro - Adds a "Contact Vendor" link on Single Product Pages which uses BuddyPress Private Messages */

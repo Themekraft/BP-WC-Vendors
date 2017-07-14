@@ -17,7 +17,7 @@ class BuddyForms_WC_Vendors_Component extends BP_Component {
 		// Unique component ID
 			$this->id,
 			// Used by BP when listing components (eg in the Dashboard)
-			__( 'Vendor Dashboard', 'wcvendors' )
+			__( 'Vendor Dashboard', 'bpwcv' )
 		);
 
 	}
@@ -94,7 +94,7 @@ class BuddyForms_WC_Vendors_Component extends BP_Component {
 			if ( ! isset( $bp_wc_vendors_options['tab_products_disabled'] ) && defined( 'WCV_PRO_VERSION' ) ) {
 
 				$sub_nav[] = array(
-					'name'            => __( 'Products', 'wcvendors' ),
+					'name'            => __( 'Products', 'bpwcv' ),
 					'slug'            => 'vendor-dashboard-products',
 					'parent_slug'     => $parent_slug,
 					'parent_url'      => trailingslashit( bp_loggedin_user_domain() . $parent_slug ),
@@ -107,7 +107,7 @@ class BuddyForms_WC_Vendors_Component extends BP_Component {
 		if ( bp_wc_vendors_fs()->is_plan( 'professional' ) ) {
 			if ( ! isset( $bp_wc_vendors_options['tab_orders_disabled'] ) && defined( 'WCV_PRO_VERSION') ) {
 				$sub_nav[] = array(
-					'name'            => __( 'Orders', 'wcvendors' ),
+					'name'            => __( 'Orders', 'bpwcv' ),
 					'slug'            => 'vendor-dashboard-orders',
 					'parent_slug'     => $parent_slug,
 					'parent_url'      => trailingslashit( bp_loggedin_user_domain() . $parent_slug ),
@@ -120,7 +120,7 @@ class BuddyForms_WC_Vendors_Component extends BP_Component {
 
 		if ( ! isset( $bp_wc_vendors_options['tab_settings_disabled'] ) ) {
 			$sub_nav[] = array(
-				'name'            => __( 'Settings', 'wcvendors' ),
+				'name'            => __( 'Settings', 'bpwcv' ),
 				'slug'            => 'vendor-dashboard-settings',
 				'parent_slug'     => $parent_slug,
 				'parent_url'      => trailingslashit( bp_loggedin_user_domain() . $parent_slug ),
@@ -133,7 +133,7 @@ class BuddyForms_WC_Vendors_Component extends BP_Component {
 		if ( bp_wc_vendors_fs()->is_plan( 'professional' ) ) {
 			if ( ! isset( $bp_wc_vendors_options['tab_ratings_disabled'] ) && defined( 'WCV_PRO_VERSION') ) {
 				$sub_nav[] = array(
-					'name'            => __( 'Ratings', 'wcvendors' ),
+					'name'            => __( 'Ratings', 'bpwcv' ),
 					'slug'            => 'vendor-dashboard-ratings',
 					'parent_slug'     => $parent_slug,
 					'parent_url'      => trailingslashit( bp_loggedin_user_domain() . $parent_slug ),
@@ -146,7 +146,7 @@ class BuddyForms_WC_Vendors_Component extends BP_Component {
 		if ( bp_wc_vendors_fs()->is_plan( 'professional' ) && defined( 'WCV_PRO_VERSION' ) ) {
 			if ( ! isset( $bp_wc_vendors_options['tab_coupons_disabled'] ) ) {
 				$sub_nav[] = array(
-					'name'            => __( 'Coupons', 'wcvendors' ),
+					'name'            => __( 'Coupons', 'bpwcv' ),
 					'slug'            => 'vendor-dashboard-coupons',
 					'parent_slug'     => $parent_slug,
 					'parent_url'      => trailingslashit( bp_loggedin_user_domain() . $parent_slug ),
@@ -292,30 +292,38 @@ class BuddyForms_WC_Vendors_Component extends BP_Component {
 
 }
 
-function bp_wc_vendors_register_member_types() {
-	bp_register_member_type( 'vendor', array(
-		'labels' => array(
-			'name'          => 'Vendors',
-			'singular_name' => 'Vendor',
-		),
-	) );
+
+function bp_wc_vendors_register_member_type_vendor() {
+
+	$bp_wc_vendors_options = get_option( 'bp_wc_vendors_options' );
+
+	if(  isset( $bp_wc_vendors_options['roles']['vendor'] ) ){
+
+		$args = array(
+			'labels'        => array(
+				'name'          => isset( $bp_wc_vendors_options['roles']['vendor_member_type_name'] ) ? $bp_wc_vendors_options['roles']['vendor_name'] : __( 'Vendors', 'bpwcv' ),
+				'singular_name' => isset( $bp_wc_vendors_options['roles']['vendor_member_type_name'] ) ? $bp_wc_vendors_options['roles']['vendor_name_singular'] : __( 'Vendor', 'bpwcv' ),
+			)
+		);
+
+		if(  isset( $bp_wc_vendors_options['roles']['vendor_'] ) ){
+			$args['has_directory'] = apply_filters('bp_wc_vendors_member_types_directory_slug', 'vendors');
+		}
+
+		bp_register_member_type( 'vendor', $args );
+	}
+
 }
 
-add_action( 'bp_init', 'bp_wc_vendors_register_member_types' );
-
-function bp_wc_vendors_register_member_types_with_directory() {
-	bp_register_member_type( 'vendor', array(
-		'labels'        => array(
-			'name'          => 'Vendors',
-			'singular_name' => 'Vendor',
-		),
-		'has_directory' => 'vendors'
-	) );
-}
-
-add_action( 'bp_register_member_types', 'bp_wc_vendors_register_member_types_with_directory' );
+add_action( 'bp_register_member_types', 'bp_wc_vendors_register_member_type_vendor' );
 
 add_action( 'set_user_role', function ( $user_id, $role, $old_roles ) {
+
+	$bp_wc_vendors_options = get_option( 'bp_wc_vendors_options' );
+
+	if( ! isset( $bp_wc_vendors_options['roles']['vendor'] ) ){
+		return;
+	}
 
 	if ( $role == 'vendor' ) {
 		bp_set_member_type( $user_id, 'vendor' );
@@ -326,6 +334,21 @@ add_action( 'set_user_role', function ( $user_id, $role, $old_roles ) {
 	}
 
 }, 10, 3 );
+
+add_action( 'bp_set_member_type', 'bp_wcv_bp_set_member_type', 10, 3 );
+function bp_wcv_bp_set_member_type( $user_id, $member_type, $append ){
+
+	$bp_wc_vendors_options = get_option( 'bp_wc_vendors_options' );
+
+	if( isset( $bp_wc_vendors_options['roles']['member_types'][$member_type] ) || $member_type == 'vendor' ){
+		$u = new WP_User( $user_id );
+		$u->add_role( 'vendor' );
+	} else {
+		$u = new WP_User( $user_id );
+		$u->remove_role( 'vendor' );
+	}
+
+}
 
 if ( class_exists( 'WCVendors_Pro_Dashboard' ) ) {
 	class BP_WCVendors_Pro_Dashboard extends WCVendors_Pro_Dashboard {

@@ -15,6 +15,7 @@ function bp_wc_vendors_tabs_submit( $get ) {
 	$current = isset( $_POST['bp_wc_vendors_options_links_submit'] ) ? 'links' : $current;
 	$current = isset( $_POST['bp_wc_vendors_options_redirects_submit'] ) ? 'redirects' : $current;
 	$current = isset( $_POST['bp_wc_vendors_options_signup_submit'] ) ? 'signup' : $current;
+	$current = isset( $_POST['bp_wc_vendors_options_roles_submit'] ) ? 'roles' : $current;
 
 	if( empty( $current ) ){
 		return;
@@ -68,7 +69,7 @@ function bp_wc_vendors_screen_function() {
 
 		<?php
 
-		$tabs = array( 'general' => 'Dashboard Tabs', 'products' => 'Product Creation', 'links' => 'Deactivate Links', 'redirects' => 'Redirects', 'signup' => 'Sign up Forms', 'go_pro' => '<font color="#b22222">Go Professional!!!</font>');
+		$tabs = array( 'general' => 'Dashboard Tabs', 'roles' => 'Roles', 'products' => 'Product Creation', 'links' => 'Deactivate Links', 'redirects' => 'Redirects', 'signup' => 'Sign up Forms', 'go_pro' => '<font color="#b22222">Go Professional!!!</font>');
 
         if ( bp_wc_vendors_fs()->is_plan__premium_only('professional') ) {
 	        unset($tabs['go_pro']);
@@ -144,6 +145,57 @@ function bp_wc_vendors_screen_function() {
                             </tr>
                         </table>
                         <input type="submit" value="Save" name="bp_wc_vendors_options_general_submit" class="button">
+						<?php
+						break;
+					case 'roles' : ?>
+                        <table class="form-table">
+                            <tr>
+                                <th><label for="">Add Vendor as Member Type</th>
+                                <td>
+
+	                                   <?php $vendor_role = isset( $bp_wc_vendors_options['roles']['vendor'] ) ? $bp_wc_vendors_options['roles']['vendor'] : 0; ?>
+                                    <p><input name='bp_wc_vendors_options[roles][vendor]' type='checkbox'
+                                              value='1' <?php checked( $vendor_role, 1 ); ?> /> Create new Member Type "Vendor" for all Vendors </p>
+
+	                                <?php $vendor_directory = isset( $bp_wc_vendors_options['roles']['vendor_directory'] ) ? $bp_wc_vendors_options['roles']['vendor_directory'] : 0; ?>
+                                    <p><input name='bp_wc_vendors_options[roles][vendor_directory]' type='checkbox'
+                                              value='1' <?php checked( $vendor_directory, 1 ); ?> /> Create a "Vendor Directory" </p>
+
+	                                <?php $vendor_directory_name = isset( $bp_wc_vendors_options['roles']['vendor_name'] ) ? $bp_wc_vendors_options['roles']['vendor_directory_name'] : __( 'Vendors', 'bpwcv' ); ?>
+                                    <p><label>Directory Name: </label><input name='bp_wc_vendors_options[roles][vendor_directory_name]' type='text'
+                                              value='<?php echo $vendor_directory_name ?>' /></p>
+
+	                                <?php $vendor_directory_name_singular = isset( $bp_wc_vendors_options['roles']['vendor_name_singular'] ) ? $bp_wc_vendors_options['roles']['vendor_directory_name_singular'] : __( 'Vendor', 'bpwcv' ); ?>
+                                    <p><label>Directory Name Singular: </label><input name='bp_wc_vendors_options[roles][vendor_directory_name_singular]' type='text'
+                                              value='<?php echo $vendor_directory_name_singular ?>' /></p>
+
+
+                                </td>
+                            </tr>
+                        </table>
+                                   <hr>
+                        <table class="form-table">
+                            <tr>
+                                <th><label for="">Member Types Vendors</th>
+                                <td>
+                                    <?php
+                                    $member_types = bp_get_member_types();
+                                    foreach($member_types as $member_type ) {
+
+                                        if( $member_type == 'vendor' ){
+                                            continue;
+                                        }
+
+                                        $vendor_role = isset( $bp_wc_vendors_options['roles']['member_types'][$member_type] ) ? $bp_wc_vendors_options['roles']['member_types'][$member_type] : 0; ?>
+                                        <p><input name='bp_wc_vendors_options[roles][member_types][<?php echo $member_type ?>]' type='checkbox'
+                                              value='1' <?php checked( $vendor_role, 1 ); ?> /> <b><?php echo $member_type ?></b></p>
+                                        <?php
+                                    }
+                                    ?>
+                                </td>
+                            </tr>
+                        </table>
+                        <input type="submit" value="Save" name="bp_wc_vendors_options_roles_submit" class="button">
 						<?php
 						break;
 					case 'products': ?>
@@ -340,7 +392,7 @@ function bp_wcv_disabled() {
 }
 
 function bp_wcv_disabled_message() {
-	$message = __('You are using the free Version. Please make sure to Update to the Pro Versions to use the Pro Features ', 'bp-wcv') . '<br><br>';
+	$message = __('You are using the free Version. Please make sure to Update to the Pro Versions to use the Pro Features ', 'bpwcv') . '<br><br>';
 
 	if ( !defined( 'WCV_PRO_VERSION' ) ) {
 		$message .= '<p><b>WC Vendors Pro</b> You need the WC Vendors Pro Version to change this settings: <a href="https://www.wcvendors.com/product/wc-vendors-pro/" target="_blank">Get it here</a></p><br>';

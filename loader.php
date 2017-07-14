@@ -118,7 +118,7 @@ class BP_WC_Vendors {
 	 * @since 0.1
 	 */
 	public function load_plugin_textdomain() {
-		load_plugin_textdomain( 'bp-wcv', false, dirname( plugin_basename( __FILE__ ) ) . '/languages/' );
+		load_plugin_textdomain( 'bpwcv', false, dirname( plugin_basename( __FILE__ ) ) . '/languages/' );
 	}
 
 	/**

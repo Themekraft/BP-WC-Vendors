@@ -3,7 +3,7 @@
 // Add the Settings Page to the Menu
 //
 function bp_wcv_welcome_screen_menu() {
-	add_submenu_page( 'bp_wc_vendors_screen', __( 'Info', 'bp_wcv' ), __( 'Info', 'bp_wcv' ), 'manage_options', 'bp_wcv_welcome_screen', 'bp_wcv_welcome_screen_content' );
+	add_submenu_page( 'bp_wc_vendors_screen', __( 'Info', 'bpwcv' ), __( 'Info', 'bpwcv' ), 'manage_options', 'bp_wcv_welcome_screen', 'bp_wcv_welcome_screen_content' );
 }
 add_action( 'admin_menu', 'bp_wcv_welcome_screen_menu', 999 );
 
