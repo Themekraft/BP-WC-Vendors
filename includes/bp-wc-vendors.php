@@ -39,10 +39,10 @@ function bp_wcv_after_vendor_store_title() {
 		return;
 	}
 
-	$vendor_shop    = urldecode( get_query_var( 'vendor_shop' ) );
-	$wcv_profile_id = WCV_Vendors::get_vendor_id( $vendor_shop );
+	$wcv_profile_id = get_the_author_meta( 'ID' );
 	$profile_url    = bp_core_get_user_domain( $wcv_profile_id );
-	echo '<a href="' . $profile_url . '/profile/" class="button">View Profile</a>';
+	echo '<a href="' . $profile_url . '" class="button">' . __( 'View Profile', 'bpwcv' ) . '</a>';
+
 }
 
 /* WC Vendors Pro - Adds a link to Profile on Single Product Pages */
@@ -92,7 +92,7 @@ function bp_wcv_disable_sold_by() {
 	remove_action( 'woocommerce_after_shop_loop_item', array( 'WCV_Vendor_Shop', 'template_loop_sold_by' ), 9, 2 );
 }
 
-add_action( 'buddyforms_the_loop_item_last', 'bp_wcv_buddyforms_the_loop_actions', 10, 1 );
+add_action( 'buddyforms_the_loop_item_title_after', 'bp_wcv_buddyforms_the_loop_actions', 10, 1 );
 function bp_wcv_buddyforms_the_loop_actions( $post_id ) {
 
 	if( get_post_type( $post_id ) != 'product'){
