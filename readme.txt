@@ -2,8 +2,8 @@
 Contributors: svenl77, themekraft, buddyforms,
 Tags: multi vendor, marketplace, buddypress, woocommerce, vendor stores, vendors, wc-vendors, wc vendors, wc4bp , buddyforms, marketplace, user, members, profiles, custom post types, taxonomy, frontend posting, frontend editing, revision, review, moderation, frontend editor
 Requires at least: WordPress 3.9
-Tested up to: WordPress 4.7
-Stable tag: 1.1.2
+Tested up to: WordPress 4.9.4
+Stable tag: 1.1.3
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -144,6 +144,11 @@ We believe that WC Vendors is the best vendor solution on the market and want to
 2. BuddyPress Members View
 
 == Changelog ==
+
+= 1.1.3 -  Feb. 21 2018 =
+* Fixed a redirect issue if logged in as vendor and try to access a member profile of a other user.
+* Fixed several smaller issues
+* Support the new templates engine from WooCommerce
 
 = 1.1.2 -  Sep. 21 2017 =
 * fixed a issue in the profile redirect form shop single if you click on View Profile
