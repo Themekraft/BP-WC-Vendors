@@ -39,7 +39,9 @@ function bp_wcv_after_vendor_store_title() {
 		return;
 	}
 
-	$wcv_profile_id = get_the_author_meta( 'ID' );
+	$vendor_shop = urldecode( get_query_var( 'vendor_shop' ) );
+	$wcv_profile_id   = WCV_Vendors::get_vendor_id( $vendor_shop );
+
 	$profile_url    = bp_core_get_user_domain( $wcv_profile_id );
 	echo '<a href="' . $profile_url . '" class="button">' . __( 'View Profile', 'bpwcv' ) . '</a>';
 
