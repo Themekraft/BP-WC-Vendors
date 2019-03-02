@@ -57,6 +57,8 @@
          * @param string $id
          * @param string $title
          * @param string $module_unique_affix
+         * @param bool   $is_network_and_blog_admins           Whether or not the message should be shown both on
+         *                                                     network and blog admin pages.
          * @param bool   $network_level_or_blog_id Since 2.0.0
          *
          * @return \FS_Admin_Notice_Manager
@@ -65,8 +67,13 @@
             $id,
             $title = '',
             $module_unique_affix = '',
+            $is_network_and_blog_admins = false,
             $network_level_or_blog_id = false
         ) {
+            if ( $is_network_and_blog_admins ) {
+                $network_level_or_blog_id = true;
+            }
+
             $key = strtolower( $id );
 
             if ( is_multisite() ) {
@@ -86,6 +93,7 @@
                     $id,
                     $title,
                     $module_unique_affix,
+                    $is_network_and_blog_admins,
                     $network_level_or_blog_id
                 );
             }
@@ -93,10 +101,19 @@
             return self::$_instances[ $key ];
         }
 
+        /**
+         * @param string $id
+         * @param string $title
+         * @param string $module_unique_affix
+         * @param bool   $is_network_and_blog_admins Whether or not the message should be shown both on network and
+         *                                             blog admin pages.
+         * @param bool|int $network_level_or_blog_id
+         */
         protected function __construct(
             $id,
             $title = '',
             $module_unique_affix = '',
+            $is_network_and_blog_admins = false,
             $network_level_or_blog_id = false
         ) {
             $this->_id                  = $id;
@@ -115,8 +132,12 @@
                 $this->_is_network_notices = false;
             }
 
-            if ( ( $this->_is_network_notices && fs_is_network_admin() ) ||
-                 ( ! $this->_is_network_notices && fs_is_blog_admin() )
+            $is_network_admin = fs_is_network_admin();
+            $is_blog_admin    = fs_is_blog_admin();
+
+            if ( ( $this->_is_network_notices && $is_network_admin ) ||
+                 ( ! $this->_is_network_notices && $is_blog_admin ) ||
+                ( $is_network_and_blog_admins && ( $is_network_admin || $is_blog_admin ) )
             ) {
                 if ( 0 < count( $this->_sticky_storage ) ) {
                     $ajax_action_suffix = str_replace( ':', '-', $this->_id );
@@ -136,7 +157,10 @@
                             $msg['type'],
                             true,
                             $msg['id'],
-                            false
+                            false,
+                            isset( $msg['wp_user_id'] ) ? $msg['wp_user_id'] : null,
+                            ! empty( $msg['plugin'] ) ? $msg['plugin'] : null,
+                            $is_network_and_blog_admins
                         );
                     }
                 }
@@ -195,7 +219,59 @@
                 return;
             }
 
+
+            $show_admin_notices = ( ! $this->is_gutenberg_page() );
+
             foreach ( $this->_notices as $id => $msg ) {
+                if ( isset( $msg['wp_user_id'] ) && is_numeric( $msg['wp_user_id'] ) ) {
+                    if ( get_current_user_id() != $msg['wp_user_id'] ) {
+                        continue;
+                    }
+                }
+
+                /**
+                 * Added a filter to control the visibility of admin notices.
+                 *
+                 * Usage example:
+                 *
+                 *     /**
+                 *      * @param bool  $show
+                 *      * @param array $msg {
+                 *      *     @var string $message The actual message.
+                 *      *     @var string $title An optional message title.
+                 *      *     @var string $type The type of the message ('success', 'update', 'warning', 'promotion').
+                 *      *     @var string $id The unique identifier of the message.
+                 *      *     @var string $manager_id The unique identifier of the notices manager. For plugins it would be the plugin's slug, for themes - `<slug>-theme`.
+                 *      *     @var string $plugin The product's title.
+                 *      *     @var string $wp_user_id An optional WP user ID that this admin notice is for.
+                 *      * }
+                 *      *
+                 *      * @return bool
+                 *      *\/
+                 *      function my_custom_show_admin_notice( $show, $msg ) {
+                 *          if ('trial_promotion' != $msg['id']) {
+                 *              return false;
+                 *          }
+                 *
+                 *          return $show;
+                 *      }
+                 *
+                 *      my_fs()->add_filter( 'show_admin_notice', 'my_custom_show_admin_notice', 10, 2 );
+                 *
+                 * @author Vova Feldman
+                 * @since 2.2.0
+                 */
+                $show_notice = call_user_func_array( 'fs_apply_filter', array(
+                    $this->_module_unique_affix,
+                    'show_admin_notice',
+                    $show_admin_notices,
+                    $msg
+                ) );
+
+                if ( true !== $show_notice ) {
+                    continue;
+                }
+
                 fs_require_template( 'admin-notice.php', $msg );
 
                 if ( $msg['sticky'] ) {
@@ -215,25 +291,73 @@
         }
 
         /**
+         * Check if the current page is the Gutenberg block editor.
+         *
+         * @author Vova Feldman (@svovaf)
+         * @since  2.2.3
+         *
+         * @return bool
+         */
+        function is_gutenberg_page() {
+            if ( function_exists( 'is_gutenberg_page' ) &&
+                 is_gutenberg_page()
+            ) {
+                // The Gutenberg plugin is on.
+                return true;
+            }
+
+            $current_screen = get_current_screen();
+
+            if ( method_exists( $current_screen, 'is_block_editor' ) &&
+                 $current_screen->is_block_editor()
+            ) {
+                // Gutenberg page on 5+.
+                return true;
+            }
+
+            return false;
+        }
+
+        /**
          * Add admin message to admin messages queue, and hook to admin_notices / all_admin_notices if not yet hooked.
          *
          * @author Vova Feldman (@svovaf)
          * @since  1.0.4
          *
-         * @param string $message
-         * @param string $title
-         * @param string $type
-         * @param bool   $is_sticky
-         * @param string $id Message ID
-         * @param bool   $store_if_sticky
+         * @param string      $message
+         * @param string      $title
+         * @param string      $type
+         * @param bool        $is_sticky
+         * @param string      $id Message ID
+         * @param bool        $store_if_sticky
+         * @param number|null $wp_user_id
+         * @param string|null $plugin_title
+         * @param bool        $is_network_and_blog_admins Whether or not the message should be shown both on network
+         *                                                and blog admin pages.
          *
          * @uses   add_action()
          */
-        function add( $message, $title = '', $type = 'success', $is_sticky = false, $id = '', $store_if_sticky = true ) {
+        function add(
+            $message,
+            $title = '',
+            $type = 'success',
+            $is_sticky = false,
+            $id = '',
+            $store_if_sticky = true,
+            $wp_user_id = null,
+            $plugin_title = null,
+            $is_network_and_blog_admins = false
+        ) {
             $notices_type = $this->get_notices_type();
 
             if ( empty( $this->_notices ) ) {
-                add_action( $notices_type, array( &$this, "_admin_notices_hook" ) );
+                if ( ! $is_network_and_blog_admins ) {
+                    add_action( $notices_type, array( &$this, "_admin_notices_hook" ) );
+                } else {
+                    add_action( 'network_admin_notices', array( &$this, "_admin_notices_hook" ) );
+                    add_action( 'admin_notices', array( &$this, "_admin_notices_hook" ) );
+                }
+
                 add_action( 'admin_enqueue_scripts', array( &$this, '_enqueue_styles' ) );
             }
 
@@ -248,7 +372,8 @@
                 'sticky'     => $is_sticky,
                 'id'         => $id,
                 'manager_id' => $this->_id,
-                'plugin'     => $this->_title,
+                'plugin'     => ( ! is_null( $plugin_title ) ? $plugin_title : $this->_title ),
+                'wp_user_id' => $wp_user_id,
             );
 
             if ( $is_sticky && $store_if_sticky ) {
@@ -299,18 +424,22 @@
          * @author Vova Feldman (@svovaf)
          * @since  1.0.7
          *
-         * @param string $message
-         * @param string $id Message ID
-         * @param string $title
-         * @param string $type
+         * @param string      $message
+         * @param string      $id Message ID
+         * @param string      $title
+         * @param string      $type
+         * @param number|null $wp_user_id
+         * @param string|null $plugin_title
+         * @param bool        $is_network_and_blog_admins Whether or not the message should be shown both on network
+         *                                                and blog admin pages.
          */
-        function add_sticky( $message, $id, $title = '', $type = 'success' ) {
+        function add_sticky( $message, $id, $title = '', $type = 'success', $wp_user_id = null, $plugin_title = null, $is_network_and_blog_admins = false ) {
             if ( ! empty( $this->_module_unique_affix ) ) {
                 $message = fs_apply_filter( $this->_module_unique_affix, "sticky_message_{$id}", $message );
                 $title   = fs_apply_filter( $this->_module_unique_affix, "sticky_title_{$id}", $title );
             }
 
-            $this->add( $message, $title, $type, true, $id );
+            $this->add( $message, $title, $type, true, $id, true, $wp_user_id, $plugin_title, $is_network_and_blog_admins );
         }
 
         /**

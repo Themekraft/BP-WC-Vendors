@@ -34,6 +34,12 @@
          */
         private $_plugin_basename;
         /**
+         * @since 2.2.1
+         *
+         * @var string
+         */
+        private $_premium_plugin_basename;
+        /**
          * @since 1.0.0
          *
          * @var string
@@ -533,10 +539,12 @@
          * @since  1.2.2.7 Even if the menu item was specified to be hidden, when it is the context page, then show the submenu item so the user will have the right context page.
          *
          * @param string $slug
+         * @param bool   $ignore_free_wp_org_theme_context This is used to decide if the associated tab should be shown
+         *                                                 or hidden.
          *
          * @return bool
          */
-        function is_submenu_item_visible( $slug ) {
+        function is_submenu_item_visible( $slug, $ignore_free_wp_org_theme_context = false ) {
             if ( $this->is_admin_page( $slug ) ) {
                 /**
                  * It is the current context page, so show the submenu item
@@ -551,7 +559,7 @@
                 return false;
             }
 
-            if ( $this->is_free_wp_org_theme() ) {
+            if ( ! $ignore_free_wp_org_theme_context && $this->is_free_wp_org_theme() ) {
                 /**
                  * wp.org themes are limited to a single submenu item, and
                  * sub-submenu items are most likely not allowed (never verified).
@@ -640,12 +648,18 @@
          * @param string $sdk_prev_version
          * @param string $sdk_version
          */
-        function _data_migration( $sdk_prev_version, $sdk_version ) {
+        function _sdk_version_update( $sdk_prev_version, $sdk_version ) {
             /**
              * @since 1.1.7.3 Fixed unwanted connectivity test cleanup.
              */
             if ( empty( $sdk_prev_version ) ) {
                 return;
+            }
+
+            if ( version_compare( $sdk_prev_version, '2.1.0', '<' ) &&
+                 version_compare( $sdk_version, '2.1.0', '>=' )
+            ) {
+                $this->_storage->handle_gdpr_admin_notice = true;
             }
 
             if ( version_compare( $sdk_prev_version, '2.0.0', '<' ) &&
@@ -663,11 +677,12 @@
                  version_compare( $sdk_version, '1.2.3', '>=' )
             ) {
                 /**
-                 * Starting from version 1.2.3, paths are stored as relative paths and not absolute paths; so when upgrading to 1.2.3, make paths relative.
+                 * Starting from version 1.2.3, paths are stored as relative instead of absolute and some of them can be
+                 * invalid.
                  *
                  * @author Leo Fajardo (@leorw)
                  */
-                $this->make_paths_relative();
+                $this->remove_invalid_paths();
             }
 
             if ( version_compare( $sdk_prev_version, '1.1.5', '<' ) &&
@@ -690,6 +705,25 @@
                     }
 
                 }
+            }
+
+            if (
+                version_compare( $sdk_prev_version, '2.2.1', '<' ) &&
+                version_compare( $sdk_version, '2.2.1', '>=' )
+            ) {
+                /**
+                 * Clear the file cache without storing the previous path since it could be a wrong path. For example,
+                 * in the versions of the SDK lower than 2.2.1, it's possible for the path of an add-on to be the same
+                 * as the parent plugin's when the add-on was auto-installed since the relevant method names were not
+                 * skipped in the logic that determines the right path in the `get_caller_main_file_and_type` method
+                 * (e.g. `try_activate_plugin`). Since it was an auto-installation, the caller was the parent plugin
+                 * and so its path was used. In case the stored path is wrong, clearing the cache will resolve issues
+                 * related to data mix-up between plugins (e.g. titles and versions of an add-on and its parent plugin).
+                 *
+                 * @author Leo Fajardo (@leorw)
+                 * @since 2.2.1
+                 */
+                $this->clear_module_main_file_cache( false );
             }
         }
 
@@ -816,30 +850,12 @@
         }
 
         /**
-         * Makes paths relative.
+         * Remove invalid paths.
          *
          * @author Leo Fajardo (@leorw)
          * @since  1.2.3
          */
-        private function make_paths_relative() {
-            $id_slug_type_path_map = self::$_accounts->get_option( 'id_slug_type_path_map', array() );
-
-            if ( isset( $id_slug_type_path_map[ $this->_module_id ]['path'] ) ) {
-                $id_slug_type_path_map[ $this->_module_id ]['path'] = $this->get_relative_path( $id_slug_type_path_map[ $this->_module_id ]['path'] );
-
-                self::$_accounts->set_option( 'id_slug_type_path_map', $id_slug_type_path_map, true );
-            }
-
-            if ( isset( $this->_storage->plugin_main_file ) ) {
-                $plugin_main_file = $this->_storage->plugin_main_file;
-
-                if ( isset( $plugin_main_file->path ) ) {
-                    $this->_storage->plugin_main_file->path = $this->get_relative_path( $this->_storage->plugin_main_file->path );
-                } else if ( isset( $plugin_main_file->prev_path ) ) {
-                    $this->_storage->plugin_main_file->prev_path = $this->get_relative_path( $this->_storage->plugin_main_file->prev_path );
-                }
-            }
-
+        private function remove_invalid_paths() {
             // Remove invalid path that is still associated with the current slug if there's any.
             $file_slug_map = self::$_accounts->get_option( 'file_slug_map', array() );
             foreach ( $file_slug_map as $plugin_basename => $slug ) {
@@ -1223,6 +1239,22 @@
         }
 
         /**
+         * Opens the support forum subemenu item in a new browser page.
+         *
+         * @author Vova Feldman (@svovaf)
+         * @since  2.1.4
+         */
+        static function _open_support_forum_in_new_page() {
+            ?>
+            <script type="text/javascript">
+                (function ($) {
+                    $('.fs-submenu-item.wp-support-forum').parent().attr('target', '_blank');
+                })(jQuery);
+            </script>
+            <?php
+        }
+
+        /**
          * @author Vova Feldman (@svovaf)
          * @since  1.0.9
          */
@@ -1233,6 +1265,26 @@
                 add_action( 'plugins_loaded', array( &$this, '_hook_action_links_and_register_account_hooks' ) );
 
                 if ( $this->is_plugin() ) {
+                    if ( self::is_plugin_install_page() && true !== fs_request_get_bool( 'fs_allow_updater_and_dialog' ) ) {
+                        /**
+                         * Unless the `fs_allow_updater_and_dialog` URL param exists and its value is `true`, make
+                         * Freemius-related updates unavailable on the "Add Plugins" admin page (/plugin-install.php)
+                         * so that they won't interfere with the .org plugins' functionalities on that page (e.g.
+                         * updating of a .org plugin).
+                         */
+                        add_filter( 'site_transient_update_plugins', array( 'Freemius', '_remove_fs_updates_from_plugin_install_page' ), 10, 2 );
+                    } else if ( self::is_plugins_page() || self::is_updates_page() ) {
+                        /**
+                         * On the "Plugins" and "Updates" admin pages, if there are premium or non–org-compliant
+                         * plugins, modify their details dialog URLs (add a Freemius-specific param) so that the SDK can
+                         * determine if the plugin information dialog should show information from Freemius.
+                         *
+                         * @author Leo Fajardo (@leorw)
+                         * @since 2.2.3
+                         */
+                        add_action( 'admin_footer', array( 'Freemius', '_prepend_fs_allow_updater_and_dialog_flag_url_param' ) );
+                    }
+
                     $plugin_dir = dirname( $this->_plugin_dir_path ) . '/';
 
                     /**
@@ -1313,6 +1365,12 @@
                         add_action( 'init', array( &$this, '_add_default_submenu_items' ), WP_FS__LOWEST_PRIORITY );
                     }
                 }
+
+                if ( $this->_storage->handle_gdpr_admin_notice ) {
+                    add_action( 'init', array( &$this, '_maybe_show_gdpr_admin_notice' ) );
+                }
+
+                add_action( 'init', array( &$this, '_maybe_add_gdpr_optin_ajax_handler') );
             }
 
             if ( $this->is_plugin() ) {
@@ -1334,18 +1392,23 @@
                 add_action( 'make_ham_blog', array( &$this, '_after_site_reactivated_callback' ) );
             }
 
-            if ( $this->is_theme() && self::is_customizer() ) {
+            if ( $this->is_theme() &&
+                 self::is_customizer() &&
+                 $this->apply_filters( 'show_customizer_upsell', true )
+            ) {
                 // Register customizer upsell.
                 add_action( 'customize_register', array( &$this, '_customizer_register' ) );
             }
 
-            add_action( 'init', array( &$this, '_redirect_on_clicked_menu_link' ), WP_FS__LOWEST_PRIORITY );
+            add_action( 'admin_init', array( &$this, '_redirect_on_clicked_menu_link' ), WP_FS__LOWEST_PRIORITY );
 
             if ( $this->is_theme() ) {
                 add_action( 'admin_init', array( &$this, '_add_tracking_links' ) );
             }
 
             add_action( 'admin_init', array( &$this, '_add_license_activation' ) );
+            add_action( 'admin_init', array( &$this, '_add_premium_version_upgrade_selection' ) );
+
             $this->add_ajax_action( 'update_billing', array( &$this, '_update_billing_ajax_action' ) );
             $this->add_ajax_action( 'start_trial', array( &$this, '_start_trial_ajax_action' ) );
 
@@ -1362,7 +1425,8 @@
 
             $this->add_action( 'after_plans_sync', array( &$this, '_check_for_trial_plans' ) );
 
-            $this->add_action( 'sdk_version_update', array( &$this, '_data_migration' ), WP_FS__DEFAULT_PRIORITY, 2 );
+            $this->add_action( 'sdk_version_update', array( &$this, '_sdk_version_update' ), WP_FS__DEFAULT_PRIORITY, 2 );
+
             $this->add_action(
                 'plugin_version_update',
                 array( &$this, '_after_version_update' ),
@@ -1373,7 +1437,7 @@
 
             add_action( 'admin_init', array( &$this, '_add_trial_notice' ) );
             add_action( 'admin_init', array( &$this, '_add_affiliate_program_notice' ) );
-            add_action( 'admin_init', array( &$this, '_enqueue_common_css' ) );
+            add_action( 'admin_enqueue_scripts', array( &$this, '_enqueue_common_css' ) );
 
             /**
              * Handle request to reset anonymous mode for `get_reconnect_url()`.
@@ -1386,6 +1450,84 @@
             ) {
                 add_action( 'admin_init', array( &$this, 'connect_again' ) );
             }
+        }
+
+        /**
+         * Makes Freemius-related updates unavailable on the "Add Plugins" admin page (/plugin-install.php) so that
+         * they won't interfere with the .org plugins' functionalities on that page (e.g. updating of a .org plugin).
+         *
+         * @author Leo Fajardo (@leorw)
+         * @since 2.2.3
+         *
+         * @param object      $updates
+         * @param string|null $transient
+         *
+         * @return object
+         */
+        static function _remove_fs_updates_from_plugin_install_page( $updates, $transient = null ) {
+            if ( is_object( $updates ) && isset( $updates->response ) ) {
+                foreach ( $updates->response as $file => $plugin ) {
+                    if ( false !== strpos( $plugin->package, 'api.freemius' ) ) {
+                        unset( $updates->response[ $file ] );
+                    }
+                }
+            }
+
+            return $updates;
+        }
+
+        /**
+         * Prepends the `fs_allow_updater_and_dialog` param to the plugin information URLs to tell the SDK to handle
+         * the information that is shown on the plugin details dialog that is shown when the relevant link is clicked.
+         *
+         * @author Leo Fajardo (@leorw)
+         * @since 2.2.3
+         *
+         * @return string
+         */
+        static function _prepend_fs_allow_updater_and_dialog_flag_url_param() {
+            $slug_basename_map = array();
+            foreach ( self::$_instances as $instance ) {
+                if ( ! $instance->is_plugin() ) {
+                    continue;
+                }
+
+                $slug_basename_map[ $instance->get_slug() ] = $instance->premium_plugin_basename();
+            }
+            ?>
+            <script type="text/javascript">
+            (function( $ ) {
+                var slugBasenameMap = <?php echo json_encode( $slug_basename_map ) ?>;
+                for ( var slug in slugBasenameMap ) {
+                    var basename = slugBasenameMap[ slug ];
+
+                    // Try to get the plugin rows if on the "Plugins" page.
+                    var $pluginRows = $( '.wp-list-table.plugins tr[data-plugin="' + basename + '"]');
+
+                    if ( 0 === $pluginRows.length ) {
+                        // Try to get the plugin rows if on the "Updates" page.
+                        var $pluginCheckbox = $( '#update-plugins-table input[type="checkbox"][value="' + basename + '"]' );
+                        if ( 0 !== $pluginCheckbox.length ) {
+                            $pluginRows = $pluginCheckbox.parents( 'tr:first' );
+                        }
+                    }
+
+                    if ( 0 === $pluginRows.length ) {
+                        // No plugin rows found.
+                        continue;
+                    }
+
+                    // Find the "View details" links and add the `fs_allow_updater_and_dialog` param to the URL.
+                    $pluginRows.find( 'a[href*="plugin-install.php?tab=plugin-information"]' ).each(function() {
+                        var $this = $( this ),
+                            href  = $this.attr( 'href' ).replace( '?tab=', '?fs_allow_updater_and_dialog=true&tab=');
+
+                        $this.attr( 'href', href );
+                    });
+                }
+            })( jQuery );
+            </script>
+            <?php
         }
 
         /**
@@ -1408,23 +1550,37 @@
 
         /**
          * @since 1.2.0 Invalidate module's main file cache, otherwise, FS_Plugin_Updater will not fetch updates.
+         *
+         * @param bool $store_prev_path
          */
-        private function clear_module_main_file_cache() {
+        private function clear_module_main_file_cache( $store_prev_path = true ) {
             if ( ! isset( $this->_storage->plugin_main_file ) ||
-                 empty( $this->_storage->plugin_main_file->path )
+                empty( $this->_storage->plugin_main_file->path )
             ) {
                 return;
             }
 
-            $plugin_main_file = clone $this->_storage->plugin_main_file;
+            if ( ! $store_prev_path ) {
+                /**
+                 * Storing the previous path is not needed when clearing the cache after an SDK version update since
+                 * the main purpose of the cache clearing in that event is to correct a wrong plugin main file path
+                 * which causes data mix-up between plugins (e.g. titles and versions of an add-on and its parent plugin).
+                 *
+                 * @author Leo Fajardo (@leorw)
+                 * @since 2.2.1
+                 */
+                unset( $this->_storage->plugin_main_file->path );
+            } else {
+                $plugin_main_file = clone $this->_storage->plugin_main_file;
 
-            // Store cached path (2nd layer cache).
-            $plugin_main_file->prev_path = $plugin_main_file->path;
+                // Store cached path (2nd layer cache).
+                $plugin_main_file->prev_path = $plugin_main_file->path;
 
-            // Clear cached path.
-            unset( $plugin_main_file->path );
+                // Clear cached path.
+                unset( $plugin_main_file->path );
 
-            $this->_storage->plugin_main_file = $plugin_main_file;
+                $this->_storage->plugin_main_file = $plugin_main_file;
+            }
 
             /**
              * Clear global cached path.
@@ -1469,6 +1625,11 @@
             $this->add_ajax_action(
                 'submit_uninstall_reason',
                 array( &$this, '_submit_uninstall_reason_action' )
+            );
+
+            $this->add_ajax_action(
+                'cancel_subscription_or_trial',
+                array( &$this, 'cancel_subscription_or_trial_ajax_action' )
             );
 
             if ( ! $this->is_addon() || $this->is_parent_plugin_installed() ) {
@@ -1595,7 +1756,7 @@
 
             return fs_normalize_path( trailingslashit( $is_plugin ?
                 WP_PLUGIN_DIR :
-                get_theme_root() ) );
+                get_theme_root( get_stylesheet() ) ) );
         }
 
         /**
@@ -1660,11 +1821,11 @@
         private function get_caller_main_file_and_type() {
             self::require_plugin_essentials();
 
-            $all_plugins       = get_plugins();
+            $all_plugins       = fs_get_plugins( true );
             $all_plugins_paths = array();
 
             // Get active plugin's main files real full names (might be symlinks).
-            foreach ( $all_plugins as $relative_path => &$data ) {
+            foreach ( $all_plugins as $relative_path => $data ) {
                 if ( false === strpos( fs_normalize_path( $relative_path ), '/' ) ) {
                     /**
                      * Ignore plugins that don't have a folder (e.g. Hello Dolly) since they
@@ -1682,7 +1843,7 @@
             $caller_file_candidate = false;
             $caller_map            = array();
             $module_type           = WP_FS__MODULE_TYPE_PLUGIN;
-            $themes_dir            = fs_normalize_path( get_theme_root() );
+            $themes_dir            = fs_normalize_path( get_theme_root( get_stylesheet() ) );
 
             for ( $i = 1, $bt = debug_backtrace(), $len = count( $bt ); $i < $len; $i ++ ) {
                 if ( empty( $bt[ $i ]['file'] ) ) {
@@ -1702,7 +1863,10 @@
                         'requir' . 'e_once',
                         'requir' . 'e',
                         'includ' . 'e_once',
-                        'includ' . 'e'
+                        'includ' . 'e',
+                        'install_and_activate_plugin',
+                        'try_activate_plugin',
+                        'activate_plugin'
                     ) )
                 ) {
                     // Ignore call stack hooks and files inclusion.
@@ -2025,6 +2189,10 @@
              * @since  1.2.2
              */
             if ( $this->is_theme() ) {
+                if ( $this->is_premium() && ! $this->has_active_valid_license() ) {
+                    FS_Plugin_Updater::instance( $this )->delete_update_data();
+                }
+
                 $this->_uninstall_plugin_event( false );
                 $this->remove_sdk_reference();
             }
@@ -2032,6 +2200,59 @@
             // Print '1' for successful operation.
             echo 1;
             exit;
+        }
+
+        /**
+         * @author Leo Fajardo (@leorw)
+         * @since  2.1.4
+         */
+        function cancel_subscription_or_trial_ajax_action() {
+            $this->_logger->entrance();
+
+            $this->check_ajax_referer( 'cancel_subscription_or_trial' );
+
+            $result = $this->cancel_subscription_or_trial( fs_request_get( 'plugin_id', $this->get_id() ), false );
+
+            if ( $this->is_api_error( $result ) ) {
+                $this->shoot_ajax_failure( $result->error->message );
+            }
+
+            $this->shoot_ajax_success();
+        }
+
+        /**
+         * @author Leo Fajardo (@leorw)
+         * @since  2.1.4
+         *
+         * @param number $plugin_id
+         *
+         * @return object
+         */
+        private function cancel_subscription_or_trial( $plugin_id ) {
+            $fs = null;
+            if ( $plugin_id == $this->get_id() ) {
+                $fs = $this;
+            } else if ( $this->is_addon_activated( $plugin_id ) ) {
+                $fs = self::get_instance_by_id( $plugin_id );
+            }
+
+            $result = null;
+
+            if ( ! is_null( $fs ) ) {
+                $result = $fs->is_paid_trial() ?
+                    $fs->_cancel_trial() :
+                    $fs->_downgrade_site();
+            }
+
+            return $result;
+        }
+
+        /**
+         * @author Leo Fajardo (@leorw)
+         * @since 2.0.2
+         */
+        function _delete_theme_update_data_action() {
+            FS_Plugin_Updater::instance( $this )->delete_update_data();
         }
 
         #endregion
@@ -2102,16 +2323,18 @@
          * @since  1.2.2
          *
          * @param  string|number $id_or_slug
+         * @param  string        $module_type
          *
          * @return number|false
          */
-        private static function get_module_id( $id_or_slug ) {
+        private static function get_module_id( $id_or_slug, $module_type = WP_FS__MODULE_TYPE_PLUGIN ) {
             if ( is_numeric( $id_or_slug ) ) {
                 return $id_or_slug;
             }
 
             foreach ( self::$_instances as $instance ) {
-                if ( $instance->is_plugin() && ( $id_or_slug === $instance->get_slug() ) ) {
+                // Also check the module type since there can be a plugin and a theme with the same slug.
+                if ( ( $module_type === $instance->get_module_type() ) && ( $id_or_slug === $instance->get_slug() ) ) {
                     return $instance->get_id();
                 }
             }
@@ -2138,15 +2361,16 @@
          * @author Vova Feldman (@svovaf)
          * @since  1.0.1
          *
-         * @param $plugin_file
+         * @param string $plugin_file
+         * @param string $module_type
          *
          * @return false|Freemius
          */
-        static function get_instance_by_file( $plugin_file ) {
+        static function get_instance_by_file( $plugin_file, $module_type = WP_FS__MODULE_TYPE_PLUGIN ) {
             $slug = self::find_slug_by_basename( $plugin_file );
 
             return ( false !== $slug ) ?
-                self::instance( self::get_module_id( $slug ) ) :
+                self::instance( self::get_module_id( $slug, $module_type ) ) :
                 false;
         }
 
@@ -2260,10 +2484,13 @@
         function is_site_activation_mode( $and_on = true ) {
             return (
                 ( $this->is_on() || ! $and_on ) &&
-                ( ! $this->is_registered() ||
-                  ( $this->is_only_premium() && ! $this->has_features_enabled_license() ) ) &&
-                ( ! $this->is_enable_anonymous() ||
-                  ( ! $this->is_anonymous() && ! $this->is_pending_activation() ) )
+                ( $this->is_premium() && true === $this->_storage->require_license_activation ) ||
+                (
+                    ( ! $this->is_registered() ||
+                      ( $this->is_only_premium() && ! $this->has_features_enabled_license() ) ) &&
+                    ( ! $this->is_enable_anonymous() ||
+                      ( ! $this->is_anonymous() && ! $this->is_pending_activation() ) )
+                )
             );
         }
 
@@ -2298,7 +2525,7 @@
                 return false;
             }
 
-            if ( $this->is_network_anonymous() ) {
+            if ( $this->is_network_anonymous() && true !== $this->_storage->require_license_activation ) {
                 // Super-admin skipped the connection network wide -> not activation mode.
                 return false;
             }
@@ -2419,7 +2646,7 @@
             self::require_plugin_essentials();
 
             $active_plugin            = array();
-            $all_plugins              = get_plugins();
+            $all_plugins              = fs_get_plugins();
             $active_plugins_basenames = self::get_active_plugins_basenames( $blog_id );
 
             foreach ( $active_plugins_basenames as $plugin_basename ) {
@@ -2445,6 +2672,11 @@
                 get_option( 'active_plugins' );
 
             $active = array();
+
+            if ( ! is_array( $active_basenames ) ) {
+                return $active;
+            }
+
             foreach ( $active_basenames as $basename ) {
                 $active[ $basename ] = array(
                     'is_active' => true,
@@ -2469,7 +2701,7 @@
         private static function get_all_plugins( $blog_id = 0 ) {
             self::require_plugin_essentials();
 
-            $all_plugins = get_plugins();
+            $all_plugins = fs_get_plugins();
 
             $active_plugins_basenames = self::get_active_plugins_basenames( $blog_id );
 
@@ -2501,7 +2733,7 @@
         private static function get_network_plugins() {
             self::require_plugin_essentials();
 
-            $all_plugins = get_plugins();
+            $all_plugins = fs_get_plugins();
 
             $network_active_basenames = is_multisite() ?
                 get_site_option( 'active_sitewide_plugins' ) :
@@ -2598,35 +2830,39 @@
             self::$_accounts = FS_Options::instance( WP_FS__ACCOUNTS_OPTION_NAME, true );
 
             if ( is_multisite() ) {
+                $has_skipped_migration = (
+                    // 'id_slug_type_path_map' - was never stored on older versions, therefore, not exists on the site level.
+                    null === self::$_accounts->get_option( 'id_slug_type_path_map', null, false ) &&
+                    // 'file_slug_map' stored on the site level, so it was running an SDK version before it was integrated with MS-network.
+                    null !== self::$_accounts->get_option( 'file_slug_map', null, false )
+                );
+
                 /**
-                 * If the id_slug_type_path_map exists on the site level but doesn't exist on the
+                 * If the file_slug_map exists on the site level but doesn't exist on the
                  * network level storage, it means that we need to process the storage with migration.
                  *
-                 * The code in this `if` scope will only be executed once and only for the first site that will execute it because once we migrate the storage data, id_slug_type_path_map will be already set in the network level storage.
+                 * The code in this `if` scope will only be executed once and only for the first site that will execute it because once we migrate the storage data, file_slug_map will be already set in the network level storage.
                  *
                  * @author Vova Feldman (@svovaf)
                  * @since  2.0.0
                  */
-                if ( null === self::$_accounts->get_option( 'id_slug_type_path_map', null, true ) &&
-                     null !== self::$_accounts->get_option( 'id_slug_type_path_map', null, false )
+                if (
+                    ( $has_skipped_migration && true !== self::$_accounts->get_option( 'ms_migration_complete', false, true ) ) ||
+                    ( null === self::$_accounts->get_option( 'file_slug_map', null, true ) &&
+                        null !== self::$_accounts->get_option( 'file_slug_map', null, false ) )
                 ) {
-                    self::migrate_accounts_to_network();
-
-                    // Migrate API options from site level to network level.
-                    $api_network_options = FS_Option_Manager::get_manager( WP_FS__OPTIONS_OPTION_NAME, true, true );
-                    $api_network_options->migrate_to_network();
-
-                    // Migrate API cache to network level storage.
-                    FS_Cache_Manager::get_manager( WP_FS__API_CACHE_OPTION_NAME )->migrate_to_network();
+                    self::migrate_options_to_network();
                 }
             }
 
             self::$_global_admin_notices = FS_Admin_Notices::instance( 'global' );
 
-            add_action( ( fs_is_network_admin() ? 'network_' : '' ) . 'admin_menu', array(
-                'Freemius',
-                '_add_debug_section'
-            ) );
+            if ( ! WP_FS__DEMO_MODE ) {
+                add_action( ( fs_is_network_admin() ? 'network_' : '' ) . 'admin_menu', array(
+                    'Freemius',
+                    '_add_debug_section'
+                ) );
+            }
 
             add_action( "wp_ajax_fs_toggle_debug_mode", array( 'Freemius', '_toggle_debug_mode' ) );
 
@@ -2641,8 +2877,28 @@
             }
 
             add_action( 'admin_footer', array( 'Freemius', '_enrich_ajax_url' ) );
+            add_action( 'admin_footer', array( 'Freemius', '_open_support_forum_in_new_page' ) );
+
 
             self::$_statics_loaded = true;
+        }
+
+        /**
+         * @author Leo Fajardo (@leorw)
+         *
+         * @since 2.1.3
+         */
+        private static function migrate_options_to_network() {
+            self::migrate_accounts_to_network();
+
+            // Migrate API options from site level to network level.
+            $api_network_options = FS_Option_Manager::get_manager( WP_FS__OPTIONS_OPTION_NAME, true, true );
+            $api_network_options->migrate_to_network();
+
+            // Migrate API cache to network level storage.
+            FS_Cache_Manager::get_manager( WP_FS__API_CACHE_OPTION_NAME )->migrate_to_network();
+
+            self::$_accounts->set_option( 'ms_migration_complete', true, true );
         }
 
         #----------------------------------------------------------------------------------
@@ -2721,6 +2977,10 @@
          * @since  1.1.7.3
          */
         static function _toggle_debug_mode() {
+            if ( ! is_super_admin() ) {
+                return;
+            }
+
             $is_on = fs_request_get( 'is_on', false, 'post' );
 
             if ( fs_request_is_post() && in_array( $is_on, array( 0, 1 ) ) ) {
@@ -2752,7 +3012,15 @@
          * @since  1.2.1.7
          */
         static function _get_db_option() {
+            check_admin_referer( 'fs_get_db_option' );
+
             $option_name = fs_request_get( 'option_name' );
+
+            if ( ! is_super_admin() ||
+                 ! fs_starts_with( $option_name, 'fs_' )
+            ) {
+                self::shoot_ajax_failure();
+            }
 
             $value = get_option( $option_name );
 
@@ -2776,7 +3044,16 @@
          * @since  1.2.1.7
          */
         static function _set_db_option() {
-            $option_name  = fs_request_get( 'option_name' );
+            check_admin_referer( 'fs_set_db_option' );
+
+            $option_name = fs_request_get( 'option_name' );
+
+            if ( ! is_super_admin() ||
+                 ! fs_starts_with( $option_name, 'fs_' )
+            ) {
+                self::shoot_ajax_failure();
+            }
+
             $option_value = fs_request_get( 'option_value' );
 
             if ( ! empty( $option_value ) ) {
@@ -2871,6 +3148,10 @@
                 }
 
                 fs_redirect( $download_url );
+            } else if ( fs_request_is_action( 'migrate_options_to_network' ) ) {
+                check_admin_referer( 'migrate_options_to_network' );
+
+                self::migrate_options_to_network();
             }
         }
 
@@ -3029,11 +3310,12 @@
          * @author Vova Feldman (@svovaf)
          * @since  1.1.7.4
          *
-         * @param int|null $blog_id Since 2.0.0.
+         * @param int|null $blog_id      Since 2.0.0.
+         * @param bool     $is_gdpr_test Since 2.0.2. Perform only the GDPR test.
          *
          * @return object|false
          */
-        private function ping( $blog_id = null ) {
+        private function ping( $blog_id = null, $is_gdpr_test = false ) {
             if ( WP_FS__SIMULATE_NO_API_CONNECTIVITY ) {
                 return false;
             }
@@ -3045,13 +3327,14 @@
             return $this->get_api_plugin_scope()->ping(
                 $this->get_anonymous_id( $blog_id ),
                 array(
-                    'is_update' => json_encode( $is_update ),
-                    'version'   => $version,
-                    'sdk'       => $this->version,
-                    'is_admin'  => json_encode( is_admin() ),
-                    'is_ajax'   => json_encode( self::is_ajax() ),
-                    'is_cron'   => json_encode( self::is_cron() ),
-                    'is_http'   => json_encode( WP_FS__IS_HTTP_REQUEST ),
+                    'is_update'    => json_encode( $is_update ),
+                    'version'      => $version,
+                    'sdk'          => $this->version,
+                    'is_admin'     => json_encode( is_admin() ),
+                    'is_ajax'      => json_encode( self::is_ajax() ),
+                    'is_cron'      => json_encode( self::is_cron() ),
+                    'is_gdpr_test' => $is_gdpr_test,
+                    'is_http'      => json_encode( WP_FS__IS_HTTP_REQUEST ),
                 )
             );
         }
@@ -3102,6 +3385,10 @@
                 $this->_add_connectivity_issue_message( $pong );
             }
 
+            if ( $is_connected ) {
+                FS_GDPR_Manager::instance()->store_is_required( $pong->is_gdpr_required );
+            }
+            
             $this->store_connectivity_info( $pong, $is_connected );
 
             return $this->_has_api_connection;
@@ -3219,8 +3506,71 @@
          */
         static function _get_current_wp_user() {
             self::require_pluggable_essentials();
+            self::wp_cookie_constants();
 
             return wp_get_current_user();
+        }
+
+        /**
+         * Define cookie constants which are required by Freemius::_get_current_wp_user() since
+         * it uses wp_get_current_user() which needs the cookie constants set. When a plugin
+         * is network activated the cookie constants are only configured after the network
+         * plugins activation, therefore, if we don't define those constants WP will throw
+         * PHP warnings/notices.
+         *
+         * @author   Vova Feldman (@svovaf)
+         * @since    2.1.1
+         */
+        private static function wp_cookie_constants() {
+            if ( defined( 'LOGGED_IN_COOKIE' ) &&
+                 ( defined( 'AUTH_COOKIE' ) || defined( 'SECURE_AUTH_COOKIE' ) )
+            ) {
+                return;
+            }
+
+            /**
+             * Used to guarantee unique hash cookies
+             *
+             * @since 1.5.0
+             */
+            if ( ! defined( 'COOKIEHASH' ) ) {
+                $siteurl = get_site_option( 'siteurl' );
+                if ( $siteurl ) {
+                    define( 'COOKIEHASH', md5( $siteurl ) );
+                } else {
+                    define( 'COOKIEHASH', '' );
+                }
+            }
+
+            if ( ! defined( 'LOGGED_IN_COOKIE' ) ) {
+                define( 'LOGGED_IN_COOKIE', 'wordpress_logged_in_' . COOKIEHASH );
+            }
+
+            /**
+             * @since 2.5.0
+             */
+            if ( ! defined( 'AUTH_COOKIE' ) ) {
+                define( 'AUTH_COOKIE', 'wordpress_' . COOKIEHASH );
+            }
+
+            /**
+             * @since 2.6.0
+             */
+            if ( ! defined( 'SECURE_AUTH_COOKIE' ) ) {
+                define( 'SECURE_AUTH_COOKIE', 'wordpress_sec_' . COOKIEHASH );
+            }
+        }
+
+        /**
+         * @author Vova Feldman (@svovaf)
+         * @since  2.1.0
+         *
+         * @return int
+         */
+        static function get_current_wp_user_id() {
+            $wp_user = self::_get_current_wp_user();
+
+            return $wp_user->ID;
         }
 
         /**
@@ -3528,6 +3878,8 @@
             $is_connected = $this->get_api_plugin_scope()->is_valid_ping( $pong );
 
             if ( $is_connected ) {
+                FS_GDPR_Manager::instance()->store_is_required( $pong->is_gdpr_required );
+
                 $this->store_connectivity_info( $pong, $is_connected );
 
                 echo $this->get_after_plugin_activation_redirect_url();
@@ -3600,6 +3952,8 @@
             $is_connected = $this->get_api_plugin_scope()->is_valid_ping( $pong );
 
             if ( $is_connected ) {
+                FS_GDPR_Manager::instance()->store_is_required( $pong->is_gdpr_required );
+
                 $this->store_connectivity_info( $pong, $is_connected );
 
                 echo $this->get_after_plugin_activation_redirect_url();
@@ -3850,6 +4204,13 @@
 
             $this->parse_settings( $plugin_info );
 
+            if ( is_admin() && $this->is_theme() && $this->is_premium() && ! $this->has_active_valid_license() ) {
+                $this->add_ajax_action(
+                    'delete_theme_update_data',
+                    array( &$this, '_delete_theme_update_data_action' )
+                );
+            }
+
             if ( ! self::is_ajax() ) {
                 if ( ! $this->is_addon() || $this->is_only_premium() ) {
                     add_action(
@@ -3930,14 +4291,16 @@
              * @author Vova Feldman (@svovaf)
              */
             if ( $this->is_user_in_admin() &&
-                 ! $this->is_addon() &&
-                 $this->has_addons() &&
-                 'plugin-information' === fs_request_get( 'tab', false ) &&
-                 $this->get_id() == fs_request_get( 'parent_plugin_id', false )
+                'plugin-information' === fs_request_get( 'tab', false ) &&
+                 $this->should_use_freemius_updater_and_dialog() &&
+                 (
+                     ( $this->is_addon() && $this->get_slug() == fs_request_get( 'plugin', false ) ) ||
+                     ( $this->has_addons() && $this->get_id() == fs_request_get( 'parent_plugin_id', false ) )
+                 )
             ) {
                 require_once WP_FS__DIR_INCLUDES . '/fs-plugin-info-dialog.php';
 
-                new FS_Plugin_Info_Dialog( $this );
+                new FS_Plugin_Info_Dialog( $this->is_addon() ? $this->get_parent_instance() : $this );
             }
 
             // Check if Freemius is on for the current plugin.
@@ -4051,7 +4414,21 @@
              * @author Vova Feldman
              * @since  1.2.1.6
              */
-            if ( $this->is_premium() && $this->has_release_on_freemius() ) {
+            if (
+                $this->should_use_freemius_updater_and_dialog() &&
+                (
+                    $this->is_premium() ||
+                    /**
+                     * If not premium but the premium version is installed, also instantiate the updater so that the
+                     * plugin information dialog of the premium version will have the information from the server.
+                     *
+                     * @author Leo Fajardo (@leorw)
+                     * @since 2.2.3
+                     */
+                    ( file_exists( fs_normalize_path( WP_PLUGIN_DIR . '/' . $this->premium_plugin_basename() ) ) )
+                ) &&
+                $this->has_release_on_freemius()
+            ) {
                 FS_Plugin_Updater::instance( $this );
             }
 
@@ -4092,6 +4469,26 @@
                     $this->do_action( 'after_init_addon_pending_activations' );
                 }
             }
+        }
+
+        /**
+         * @author Leo Fajardo (@leorw)
+         * @since 2.2.3
+         *
+         * @return bool
+         */
+        private function should_use_freemius_updater_and_dialog() {
+            return (
+                /**
+                 * Unless the `fs_allow_updater_and_dialog` URL param exists and its value is `true`, disallow updater
+                 * and dialog on the "Add Plugins" admin page (/plugin-install.php) so that they won't interfere with
+                 * the .org plugins' functionalities on that page (e.g. installation and viewing plugin details from
+                 * .org).
+                 */
+                ( ! self::is_plugin_install_page() || true === fs_request_get_bool( 'fs_allow_updater_and_dialog' ) ) &&
+                // Disallow updater and dialog when installing a plugin, otherwise .org "add-on" plugins will be affected.
+                ( 'install-plugin' !== fs_request_get( 'action' ) )
+            );
         }
 
         /**
@@ -4530,16 +4927,20 @@
                 $this->_plugin :
                 new FS_Plugin();
 
+            $premium_suffix = $this->get_option( $plugin_info, 'premium_suffix', '(Premium)' );
+
             $plugin->update( array(
                 'id'                   => $id,
                 'type'                 => $this->get_option( $plugin_info, 'type', $this->_module_type ),
                 'public_key'           => $public_key,
                 'slug'                 => $this->_slug,
+                'premium_slug'         => $this->get_option( $plugin_info, 'premium_slug', "{$this->_slug}-premium" ),
                 'parent_plugin_id'     => $parent_id,
                 'version'              => $this->get_plugin_version(),
-                'title'                => $this->get_plugin_name(),
+                'title'                => $this->get_plugin_name( $premium_suffix ),
                 'file'                 => $this->_plugin_basename,
                 'is_premium'           => $this->get_bool_option( $plugin_info, 'is_premium', true ),
+                'premium_suffix'       => $premium_suffix,
                 'is_live'              => $this->get_bool_option( $plugin_info, 'is_live', true ),
                 'affiliate_moderation' => $this->get_option( $plugin_info, 'has_affiliation' ),
             ) );
@@ -4920,7 +5321,7 @@
             }
 
             $addon            = $this->get_addon( $addon_id );
-            $premium_basename = "{$addon->slug}-premium/{$addon->slug}.php";
+            $premium_basename = "{$addon->premium_slug}/{$addon->slug}.php";
 
             if ( file_exists( fs_normalize_path( WP_PLUGIN_DIR . '/' . $premium_basename ) ) ) {
                 return $premium_basename;
@@ -4928,9 +5329,9 @@
 
             $all_plugins = $this->get_all_plugins();
 
-            foreach ( $all_plugins as $basename => &$data ) {
+            foreach ( $all_plugins as $basename => $data ) {
                 if ( $addon->slug === $data['slug'] ||
-                     $addon->slug . '-premium' === $data['slug']
+                     $addon->premium_slug === $data['slug']
                 ) {
                     return $basename;
                 }
@@ -5170,7 +5571,7 @@
             if ( ! isset( $this->_is_anonymous ) ) {
                 if ( $this->is_network_anonymous() ) {
                     $this->_is_anonymous = true;
-                } else {
+                } else if ( ! fs_is_network_admin() ) {
                     if ( ! isset( $this->_storage->is_anonymous ) ) {
                         // Not skipped.
                         $this->_is_anonymous = false;
@@ -5362,6 +5763,20 @@
         }
 
         /**
+         * Sets the keepalive time to now.
+         *
+         * @author Leo Fajardo (@leorw)
+         * @since  2.2.3
+         *
+         * @param bool|null $use_network_level_storage
+         */
+        private function set_keepalive_timestamp( $use_network_level_storage = null ) {
+            $this->_logger->entrance();
+
+            $this->_storage->store( 'keepalive_timestamp', time(), $use_network_level_storage );
+        }
+
+        /**
          * Check if cron was executed in the last $period of seconds.
          *
          * @author Vova Feldman (@svovaf)
@@ -5375,7 +5790,7 @@
         private function is_cron_executed( $name, $period = WP_FS__TIME_24_HOURS_IN_SEC ) {
             $this->_logger->entrance( $name );
 
-            $last_execution = $this->set_cron_execution_timestamp( $name );
+            $last_execution = $this->cron_last_execution( $name );
 
             if ( ! is_numeric( $last_execution ) ) {
                 return false;
@@ -5636,12 +6051,14 @@
                 }
             }
 
+            $current_blog_id = get_current_blog_id();
+
             foreach ( $users_2_blog_ids as $user_id => $blog_ids ) {
                 if ( 0 < $blog_ids[0] ) {
                     $this->switch_to_blog( $blog_ids[0] );
                 }
 
-                call_user_func_array( $callable, array( $blog_ids ) );
+                call_user_func_array( $callable, array( $blog_ids, ( is_multisite() ? $current_blog_id : null ) ) );
 
                 foreach ( $blog_ids as $blog_id ) {
                     $this->do_action( "after_{$name}_cron", $blog_id );
@@ -5649,6 +6066,8 @@
             }
 
             if ( is_multisite() ) {
+                $this->switch_to_blog( $current_blog_id );
+
                 $this->do_action( "after_{$name}_cron_multisite" );
             }
         }
@@ -5720,13 +6139,16 @@
          * @author Vova Feldman (@svovaf)
          * @since  2.0.0
          *
-         * @param int[] $blog_ids
+         * @param int[]    $blog_ids
+         * @param int|null $current_blog_id @since 2.2.3. This is passed from the `execute_cron` method and used by the
+         *                                  `_sync_plugin_license` method in order to switch to the previous blog when sending
+         *                                  updates for a single site in case `execute_cron` has switched to a different blog.
          */
-        function _sync_cron_method( array $blog_ids ) {
+        function _sync_cron_method( array $blog_ids, $current_blog_id = null ) {
             if ( $this->is_registered() ) {
                 if ( $this->has_paid_plan() ) {
                     // Initiate background plan sync.
-                    $this->_sync_license( true );
+                    $this->_sync_license( true, false, $current_blog_id );
 
                     if ( $this->is_paying() ) {
                         // Check for premium plugin updates.
@@ -5873,7 +6295,7 @@
          * @param int $except_blog_id Since 2.0.0 when running in a multisite network environment, the cron execution is consolidated. This param allows excluding excluded specified blog ID from being the cron executor.
          */
         private function schedule_install_sync( $except_blog_id = 0 ) {
-            $this->schedule_cron( 'install_sync', 'install_sync', 'single', 0, false, $except_blog_id );
+            $this->schedule_cron( 'install_sync', 'install_sync', 'single', WP_FS__SCRIPT_START_TIME, false, $except_blog_id );
         }
 
         /**
@@ -5941,9 +6363,10 @@
          * @author Vova Feldman (@svovaf)
          * @since  2.0.0
          *
-         * @param int[] $blog_ids
+         * @param int[]    $blog_ids
+         * @param int|null $current_blog_id
          */
-        function _sync_install_cron_method( array $blog_ids ) {
+        function _sync_install_cron_method( array $blog_ids, $current_blog_id = null ) {
             if ( $this->is_registered() ) {
                 if ( 1 < count( $blog_ids ) ) {
                     $this->sync_installs( array(), true );
@@ -5993,9 +6416,9 @@
          * @return bool
          */
         function is_plugin_activation() {
-            return get_option( 'fs_'
-                               . ( $this->is_plugin() ? '' : $this->_module_type . '_' )
-                               . "{$this->_slug}_activated", false );
+            $result = get_transient( "fs_{$this->_module_type}_{$this->_slug}_activated" );
+
+            return !empty($result);
         }
 
         /**
@@ -6012,13 +6435,16 @@
              * @since 1.1.7 Do NOT redirect to opt-in when running in network admin mode.
              */
             if ( $this->is_plugin_activation() ) {
-                delete_option( 'fs_'
-                               . ( $this->is_plugin() ? '' : $this->_module_type . '_' )
-                               . "{$this->_slug}_activated" );
+                delete_transient( "fs_{$this->_module_type}_{$this->_slug}_activated" );
 
-                $this->_redirect_on_activation_hook();
-
-                return;
+                if ( isset( $_GET['activate-multi'] ) ) {
+                    /**
+                     * Don't redirect if activating multiple plugins at once (bulk activation).
+                     */
+                } else {
+                    $this->_redirect_on_activation_hook();
+                    return;
+                }
             }
 
             if ( fs_request_is_action( $this->get_unique_affix() . '_skip_activation' ) ) {
@@ -6039,8 +6465,12 @@
                 fs_redirect( $this->get_after_activation_url( 'after_delegation_url' ) );
             }
 
+            $this->_add_upgrade_action_link();
+
             if ( ! $this->is_addon() &&
+                 ! ( ! $this->_is_network_active && fs_is_network_admin() ) &&
                  (
+                     ( true === $this->_storage->require_license_activation ) ||
                      // Not registered nor anonymous.
                      ( ! $this->is_registered() && ! $this->is_anonymous() ) ||
                      // OR, network level and in network upgrade mode.
@@ -6057,14 +6487,18 @@
                          * @since  1.2.2
                          */
                         if ( $this->is_theme()
-                             && $this->is_only_premium()
                              && ! $this->has_settings_menu()
                              && ! isset( $_REQUEST['fs_action'] )
                              && $this->can_activate_previous_theme()
                         ) {
-                            $this->activate_previous_theme();
+                            if ( $this->is_only_premium() ) {
+                                $this->activate_previous_theme();
+                                return;
+                            }
 
-                            return;
+                            if ( true === $this->_storage->require_license_activation ) {
+                                $this->_storage->require_license_activation = false;
+                            }
                         }
 
                         if ( ! fs_is_network_admin() &&
@@ -6075,19 +6509,21 @@
                         }
 
                         if ( $this->is_plugin_new_install() || $this->is_only_premium() ) {
-                            // Show notice for new plugin installations.
-                            $this->_admin_notices->add(
-                                sprintf(
-                                    $this->get_text_inline( 'You are just one step away - %s', 'you-are-step-away' ),
-                                    sprintf( '<b><a href="%s">%s</a></b>',
-                                        $this->get_activation_url( array(), ! $this->is_delegated_connection() ),
-                                        sprintf( $this->get_text_x_inline( 'Complete "%s" Activation Now',
-                                            '%s - plugin name. As complete "PluginX" activation now', 'activate-x-now' ), $this->get_plugin_name() )
-                                    )
-                                ),
-                                '',
-                                'update-nag'
-                            );
+                            if ( ! $this->_anonymous_mode ) {
+                                // Show notice for new plugin installations.
+                                $this->_admin_notices->add(
+                                    sprintf(
+                                        $this->get_text_inline( 'You are just one step away - %s', 'you-are-step-away' ),
+                                        sprintf( '<b><a href="%s">%s</a></b>',
+                                            $this->get_activation_url( array(), ! $this->is_delegated_connection() ),
+                                            sprintf( $this->get_text_x_inline( 'Complete "%s" Activation Now',
+                                                '%s - plugin name. As complete "PluginX" activation now', 'activate-x-now' ), $this->get_plugin_name() )
+                                        )
+                                    ),
+                                    '',
+                                    'update-nag'
+                                );
+                            }
                         } else {
                             if ( $this->should_add_sticky_optin_notice() ) {
                                 $this->add_sticky_optin_admin_notice();
@@ -6115,8 +6551,6 @@
                     $this->_show_theme_activation_optin_dialog();
                 }
             }
-
-            $this->_add_upgrade_action_link();
         }
 
         /**
@@ -6164,7 +6598,7 @@
                     $this->_module_type,
                     sprintf( '<b><a href="%s">%s</a></b>',
                         $this->get_activation_url(),
-                        sprintf( $this->get_text_inline( 'Opt in to make "%s" Better!', 'optin-x-now' ), $this->get_plugin_name() )
+                        sprintf( $this->get_text_inline( 'Opt in to make "%s" better!', 'optin-x-now' ), $this->get_plugin_name() )
                     )
                 ),
                 'connect_account',
@@ -6459,8 +6893,6 @@
         /**
          * @author Leo Fajardo (@leorw)
          * @since  1.2.2
-         *
-         * @return string
          */
         private function activate_previous_theme() {
             switch_theme( $this->get_previous_theme_slug() );
@@ -6628,6 +7060,20 @@
                 }
             }
 
+            if (
+                $is_premium_version_activation &&
+                (
+                    ( ! $this->is_registered() && $this->is_anonymous() ) ||
+                    (
+                        $this->is_registered() &&
+                        ! $this->is_trial() &&
+                        ! $this->has_features_enabled_license()
+                    )
+                )
+            ) {
+                $this->_storage->require_license_activation = true;
+            }
+
             if ( ! isset( $this->_storage->is_plugin_new_install ) ) {
                 /**
                  * If no previous version of plugin's version exist, it means that it's either
@@ -6649,9 +7095,7 @@
                  ! $this->_isAutoInstall
             ) {
                 // Store hint that the plugin was just activated to enable auto-redirection to settings.
-                add_option( 'fs_'
-                            . ( $this->is_plugin() ? '' : $this->_module_type . '_' )
-                            . "{$this->_slug}_activated", true );
+                set_transient( "fs_{$this->_module_type}_{$this->_slug}_activated", true, 60 );
             }
 
             /**
@@ -6842,6 +7286,10 @@
             $this->clear_install_sync_cron();
 
             if ( $this->is_registered() ) {
+                if ( $this->is_premium() && ! $this->has_active_valid_license() ) {
+                    FS_Plugin_Updater::instance( $this )->delete_update_data();
+                }
+
                 if ( $is_network_deactivation ) {
                     // Send deactivation event.
                     $this->sync_installs( array(
@@ -6895,7 +7343,7 @@
         private function remove_sdk_reference() {
             global $fs_active_plugins;
 
-            foreach ( $fs_active_plugins->plugins as $sdk_path => &$data ) {
+            foreach ( $fs_active_plugins->plugins as $sdk_path => $data ) {
                 if ( $this->_plugin_basename == $data->plugin_path ) {
                     unset( $fs_active_plugins->plugins[ $sdk_path ] );
                     break;
@@ -7078,6 +7526,23 @@
         }
 
         /**
+         * This is used to ensure that before redirecting to the opt-in page after resetting the anonymous mode or
+         * deleting the account in the network level, the URL of the page to redirect to is correct.
+         *
+         * @author Leo Fajardo (@leorw)
+         *
+         * @since 2.1.3
+         */
+        private function maybe_set_slug_and_network_menu_exists_flag() {
+            if ( ! empty( $this->_dynamically_added_top_level_page_hook_name ) ) {
+                $this->_menu->set_slug_and_network_menu_exists_flag( $this->_menu->has_menu() ?
+                    $this->_menu->get_slug() :
+                    $this->_slug
+                );
+            }
+        }
+
+        /**
          * Clears the anonymous mode and redirects to the opt-in screen.
          *
          * @author Vova Feldman (@svovaf)
@@ -7089,6 +7554,8 @@
             }
 
             $this->reset_anonymous_mode( fs_is_network_admin() );
+
+            $this->maybe_set_slug_and_network_menu_exists_flag();
 
             fs_redirect( $this->get_activation_url() );
         }
@@ -7102,7 +7569,7 @@
          * @param array|null $sites            Since 2.0.0. Specific sites.
          * @param bool       $skip_all_network Since 2.0.0. If true, skip connection for all sites.
          */
-        private function skip_connection( $sites = null, $skip_all_network = false ) {
+        function skip_connection( $sites = null, $skip_all_network = false ) {
             $this->_logger->entrance();
 
             $this->_admin_notices->remove_sticky( 'connect_account' );
@@ -7529,39 +7996,43 @@
             $include_plugins = true,
             $include_themes = true
         ) {
-            /**
-             * @since 1.1.8 Also send plugin updates.
-             */
-            if ( $include_plugins && ! isset( $override['plugins'] ) ) {
-                $plugins = $this->get_plugins_data_for_api();
-                if ( ! empty( $plugins ) ) {
-                    $override['plugins'] = $plugins;
-                }
-            }
-            /**
-             * @since 1.1.8 Also send themes updates.
-             */
-            if ( $include_themes && ! isset( $override['themes'] ) ) {
-                $themes = $this->get_themes_data_for_api();
-                if ( ! empty( $themes ) ) {
-                    $override['themes'] = $themes;
+            if ( ! defined( 'WP_FS__TRACK_PLUGINS' ) || false !== WP_FS__TRACK_PLUGINS ) {
+                /**
+                 * @since 1.1.8 Also send plugin updates.
+                 */
+                if ( $include_plugins && ! isset( $override['plugins'] ) ) {
+                    $plugins = $this->get_plugins_data_for_api();
+                    if ( ! empty( $plugins ) ) {
+                        $override['plugins'] = $plugins;
+                    }
                 }
             }
 
-            return array_merge( array(
-                'version'                      => $this->get_plugin_version(),
-                'is_premium'                   => $this->is_premium(),
-                'language'                     => get_bloginfo( 'language' ),
-                'charset'                      => get_bloginfo( 'charset' ),
-                'platform_version'             => get_bloginfo( 'version' ),
-                'sdk_version'                  => $this->version,
-                'programming_language_version' => phpversion(),
-                'title'                        => get_bloginfo( 'name' ),
-                'url'                          => get_site_url(),
+            if ( ! defined( 'WP_FS__TRACK_THEMES' ) || false !== WP_FS__TRACK_THEMES ) {
+                /**
+                 * @since 1.1.8 Also send themes updates.
+                 */
+                if ( $include_themes && ! isset( $override['themes'] ) ) {
+                    $themes = $this->get_themes_data_for_api();
+                    if ( ! empty( $themes ) ) {
+                        $override['themes'] = $themes;
+                    }
+                }
+            }
+
+            $versions = $this->get_versions();
+
+            return array_merge( $versions, array(
+                'version'         => $this->get_plugin_version(),
+                'is_premium'      => $this->is_premium(),
+                'language'        => get_bloginfo( 'language' ),
+                'charset'         => get_bloginfo( 'charset' ),
+                'title'           => get_bloginfo( 'name' ),
+                'url'             => get_site_url(),
                 // Special params.
-                'is_active'                    => true,
-                'is_disconnected'              => $this->is_tracking_prohibited(),
-                'is_uninstalled'               => false,
+                'is_active'       => true,
+                'is_disconnected' => $this->is_tracking_prohibited(),
+                'is_uninstalled'  => false,
             ), $override );
         }
 
@@ -7606,12 +8077,10 @@
 //            }
 
             // Common properties.
-            $common = array_merge( array(
-                'version'                      => $this->get_plugin_version(),
-                'is_premium'                   => $this->is_premium(),
-                'sdk_version'                  => $this->version,
-                'programming_language_version' => phpversion(),
-                'platform_version'             => get_bloginfo( 'version' ),
+            $versions = $this->get_versions();
+            $common   = array_merge( $versions, array(
+                'version'    => $this->get_plugin_version(),
+                'is_premium' => $this->is_premium(),
             ), $override );
 
 
@@ -7765,28 +8234,56 @@
                 $params = $this->get_install_diff_for_api( $check_properties, $this->_site, $override );
             }
 
-            if ( 0 < count( $params ) ) {
+            $keepalive_only_update = false;
+            if ( empty( $params ) ) {
+                $keepalive_only_update = $this->should_send_keepalive_update();
+
+                if ( ! $keepalive_only_update ) {
+                    /**
+                     * There are no updates to send including keepalive.
+                     *
+                     * @author Leo Fajardo (@leorw)
+                     * @since 2.2.3
+                     */
+                    return false;
+                }
+            }
+
+            if ( ! $keepalive_only_update ) {
+                /**
+                 * Do not update the last install sync timestamp after a keepalive-only call since there were no actual
+                 * updates sent.
+                 *
+                 * @author Leo Fajardo (@leorw)
+                 * @since 2.2.3
+                 */
                 if ( ! is_multisite() ) {
                     // Update last install sync timestamp.
                     $this->set_cron_execution_timestamp( 'install_sync' );
                 }
 
                 $params['uid'] = $this->get_anonymous_id();
-
-                // Send updated values to FS.
-                $site = $this->get_api_site_scope()->call( '/', 'put', $params );
-
-                if ( $this->is_api_result_entity( $site ) ) {
-                    if ( ! is_multisite() ) {
-                        // I successfully sent install update, clear scheduled sync if exist.
-                        $this->clear_install_sync_cron();
-                    }
-                }
-
-                return $site;
             }
 
-            return false;
+            $this->set_keepalive_timestamp();
+
+            // Send updated values to FS.
+            $site = $this->get_api_site_scope()->call( '/', 'put', $params );
+
+            if ( ! $keepalive_only_update && $this->is_api_result_entity( $site ) ) {
+                /**
+                 * Do not clear scheduled sync after a keepalive-only call since there were no actual updates sent.
+                 *
+                 * @author Leo Fajardo (@leorw)
+                 * @since 2.2.3
+                 */
+                if ( ! is_multisite() ) {
+                    // I successfully sent install update, clear scheduled sync if exist.
+                    $this->clear_install_sync_cron();
+                }
+            }
+
+            return $site;
         }
 
         /**
@@ -7805,22 +8302,68 @@
 
             $installs_data = $this->get_installs_data_for_api( $override, ! $flush );
 
+            $keepalive_only_update = false;
             if ( empty( $installs_data ) ) {
-                return false;
+                /**
+                 * Pass `true` to use the network level storage since the update is for many installs.
+                 *
+                 * @author Leo Fajardo (@leorw)
+                 * @since 2.2.3
+                 */
+                $keepalive_only_update = $this->should_send_keepalive_update( true );
+
+                if ( ! $keepalive_only_update ) {
+                    /**
+                     * There are no updates to send including keepalive.
+                     *
+                     * @author Leo Fajardo (@leorw)
+                     * @since 2.2.3
+                     */
+                    return false;
+                }
             }
 
-            // Update last install sync timestamp.
-            $this->set_cron_execution_timestamp( 'install_sync' );
+            if ( ! $keepalive_only_update ) {
+                // Update last install sync timestamp if there were actual updates sent (i.e., not a keepalive-only call).
+                $this->set_cron_execution_timestamp( 'install_sync' );
+            }
+
+            /**
+             * Pass `true` to use the network level storage since the update is for many installs.
+             *
+             * @author Leo Fajardo (@leorw)
+             * @since 2.2.3
+             */
+            $this->set_keepalive_timestamp( true );
 
             // Send updated values to FS.
             $result = $this->get_api_user_scope()->call( "/plugins/{$this->_plugin->id}/installs.json", 'put', $installs_data );
 
-            if ( $this->is_api_result_object( $result, 'installs' ) ) {
-                // I successfully sent installs update, clear scheduled sync if exist.
+            if ( ! $keepalive_only_update && $this->is_api_result_object( $result, 'installs' ) ) {
+                // I successfully sent installs update (there was an actual update sent and it's not just a keepalive-only call), clear scheduled sync if exist.
                 $this->clear_install_sync_cron();
             }
 
             return $result;
+        }
+
+        /**
+         * @author Leo Fajardo (@leorw)
+         *
+         * @param bool|null $use_network_level_storage
+         *
+         * @return bool
+         */
+        private function should_send_keepalive_update( $use_network_level_storage = null ) {
+            $keepalive_timestamp = $this->_storage->get( 'keepalive_timestamp', 0, $use_network_level_storage );
+
+            if ( $keepalive_timestamp < ( time() - WP_FS__TIME_WEEK_IN_SEC ) ) {
+                // If updated more than 7 days ago, trigger a keepalive and update the time it was triggered.
+                return true;
+            } else {
+                // If updated 7 days ago or less, "flip a coin", if the value is 7 trigger a keepalive and update the last time it was triggered.
+                return ( 7 == rand( 1, 7 ) );
+            }
         }
 
         /**
@@ -8028,13 +8571,58 @@
         }
 
         /**
+         * Set the basename of the current product and hook _activate_plugin_event_hook() to the activation action.
+         *
+         * @author Vova Feldman (@svovaf)
+         * @since  2.2.1
+         *
+         * @param string $is_premium
+         * @param string $caller
+         *
+         * @return string
+         */
+        function set_basename( $is_premium, $caller ) {
+            $basename = plugin_basename( $caller );
+
+            $current_basename = $is_premium ?
+                $this->_premium_plugin_basename :
+                $this->_free_plugin_basename;
+
+            if ( $current_basename == $basename ) {
+                // Basename value set correctly.
+                return;
+            }
+
+            if ( $is_premium ) {
+                $this->_premium_plugin_basename = $basename;
+            } else {
+                $this->_free_plugin_basename = $basename;
+            }
+
+            $plugin_dir = dirname( $this->_plugin_dir_path ) . '/';
+
+            register_activation_hook(
+                $plugin_dir . $basename,
+                array( &$this, '_activate_plugin_event_hook' )
+            );
+        }
+
+        /**
          * @author Vova Feldman (@svovaf)
          * @since  1.1.1
+         * @since  2.2.1 If the context product is in its premium version, use the current module's basename, even if it was renamed.
          *
          * @return string
          */
         function premium_plugin_basename() {
-            return "{$this->_slug}-premium/" . basename( $this->_free_plugin_basename );
+            if ( ! isset( $this->_premium_plugin_basename ) ) {
+                $this->_premium_plugin_basename = $this->is_premium() ?
+                    // The product is premium, so use the current basename.
+                    $this->_plugin_basename :
+                    $this->get_premium_slug() . '/' . basename( $this->_free_plugin_basename );
+            }
+
+            return $this->_premium_plugin_basename;
         }
 
         /**
@@ -8133,6 +8721,14 @@
                 } else {
                     $theme_data = wp_get_theme();
 
+                    if ( $this->_plugin_basename !== $theme_data->get_stylesheet() && is_child_theme() ) {
+                        $parent_theme = $theme_data->parent();
+
+                        if ( ( $parent_theme instanceof WP_Theme ) && $this->_plugin_basename === $parent_theme->get_stylesheet() ) {
+                            $theme_data = $parent_theme;
+                        }
+                    }
+
                     $plugin_data = array(
                         'Name'        => $theme_data->get( 'Name' ),
                         'Version'     => $theme_data->get( 'Version' ),
@@ -8165,13 +8761,29 @@
         }
 
         /**
+         * @author Leo Fajardo (@leorw)
+         * @since 2.2.1
+         *
+         * @return string
+         */
+        function get_premium_slug() {
+            return is_object( $this->_plugin ) ?
+                $this->_plugin->premium_slug :
+                "{$this->_slug}-premium";
+        }
+
+        /**
+         * Retrieve the desired folder name for the product.
+         *
          * @author Vova Feldman (@svovaf)
          * @since  1.2.1.7
          *
          * @return string Plugin slug.
          */
         function get_target_folder_name() {
-            return $this->_slug . ( $this->can_use_premium_code() ? '-premium' : '' );
+            return $this->can_use_premium_code() ?
+                $this->_plugin->premium_slug :
+                $this->_slug;
         }
 
         /**
@@ -8242,31 +8854,63 @@
          * @author Vova Feldman (@svovaf)
          * @since  1.0.9
          *
+         * @param string|bool $premium_suffix
+         *
          * @return string
          */
-        function get_plugin_name() {
+        function get_plugin_name( $premium_suffix = false ) {
             $this->_logger->entrance();
 
+            /**
+             * This `if-else` can be squeezed into a single `if` but I intentionally split it for code readability.
+             *
+             * @author Vova Feldman
+             */
             if ( ! isset( $this->_plugin_name ) ) {
-                $plugin_data = $this->get_plugin_data();
-
-                // Get name.
-                $this->_plugin_name = $plugin_data['Name'];
-
-                // Check if plugin name contains "(Premium)" suffix and remove it.
-                $suffix     = ' (premium)';
-                $suffix_len = strlen( $suffix );
-
-                if ( strlen( $plugin_data['Name'] ) > $suffix_len &&
-                     $suffix === substr( strtolower( $plugin_data['Name'] ), - $suffix_len )
-                ) {
-                    $this->_plugin_name = substr( $plugin_data['Name'], 0, - $suffix_len );
-                }
-
-                $this->_logger->departure( 'Name = ' . $this->_plugin_name );
+                // Name is not yet set.
+                $this->set_name( $premium_suffix );
+            } else if (
+                ! empty( $premium_suffix ) &&
+                ( ! is_object( $this->_plugin ) || $this->_plugin->premium_suffix !== $premium_suffix )
+            ) {
+                // Name is already set, but there's a change in the premium suffix.
+                $this->set_name( $premium_suffix );
             }
 
             return $this->_plugin_name;
+        }
+
+        /**
+         * Calculates and stores the product's name. This helper function was created specifically for get_plugin_name() just to make the code clearer.
+         *
+         * @author Vova Feldman (@svovaf)
+         * @since  2.2.1
+         *
+         * @param string $premium_suffix
+         */
+        private function set_name( $premium_suffix = '' ) {
+            $plugin_data = $this->get_plugin_data();
+
+            // Get name.
+            $this->_plugin_name = $plugin_data['Name'];
+
+            if ( is_string( $premium_suffix ) ) {
+                $premium_suffix = trim( $premium_suffix );
+
+                if ( ! empty( $premium_suffix ) ) {
+                    // Check if plugin name contains " (premium)" or a custom suffix and remove it.
+                    $suffix     = ( ' ' . strtolower( $premium_suffix ) );
+                    $suffix_len = strlen( $suffix );
+
+                    if ( strlen( $plugin_data['Name'] ) > $suffix_len &&
+                         $suffix === substr( strtolower( $plugin_data['Name'] ), - $suffix_len )
+                    ) {
+                        $this->_plugin_name = substr( $plugin_data['Name'], 0, - $suffix_len );
+                    }
+                }
+            }
+
+            $this->_logger->departure( 'Name = ' . $this->_plugin_name );
         }
 
         /**
@@ -8972,7 +9616,16 @@
          * @return bool
          */
         function is_premium() {
-            return $this->_plugin->is_premium;
+            /**
+             * `$this->_plugin` will be `false` when `is_activation_mode` calls this method directly from the
+             * `_register_hooks` method.
+             *
+             * @author Leo Fajardo (@leorw)
+             * @since 2.2.3
+             */
+            return is_object( $this->_plugin ) ?
+                $this->_plugin->is_premium :
+                false;
         }
 
         /**
@@ -9040,7 +9693,7 @@
         function is_trial() {
             $this->_logger->entrance();
 
-            if ( ! $this->is_registered() ) {
+            if ( ! $this->is_registered() || ! is_object( $this->_site ) ) {
                 return false;
             }
 
@@ -9199,7 +9852,7 @@
          *
          * @return bool
          */
-        private function has_any_license() {
+        function has_any_license() {
             return is_array( $this->_licenses ) && ( 0 < count( $this->_licenses ) );
         }
 
@@ -10363,6 +11016,77 @@
         }
 
         /**
+         * Displays a subscription cancellation dialog box when the user clicks on the "Deactivate License"
+         * link on the "Account" page or deactivates a plugin and there's an active subscription that is
+         * either associated with a non-lifetime single-site license or non-lifetime multisite license that
+         * is only activated on a single production site.
+         *
+         * @author Leo Fajardo (@leorw)
+         * @since  2.2.1
+         *
+         * @param bool $is_license_deactivation
+         */
+        function _maybe_add_subscription_cancellation_dialog_box( $is_license_deactivation = false ) {
+            if ( fs_is_network_admin() ) {
+                // Subscription cancellation dialog box is currently not supported for multisite networks.
+                return;
+            }
+
+            $license = $this->_get_license();
+
+            /**
+             * If the installation is associated with a non-lifetime license, which is either a single-site or only activated on a single production site (or zero), and connected to an active subscription, suggest the customer to cancel the subscription upon deactivation.
+             *
+             * @author Leo Fajardo (@leorw) (Comment added by Vova Feldman @svovaf)
+             * @since 2.2.1
+             */
+            if ( ! is_object( $license ) ||
+                $license->is_lifetime() ||
+                ( ! $license->is_single_site() && $license->activated > 1 )
+            ) {
+                return;
+            }
+
+            /**
+             * @var FS_Subscription $subscription
+             */
+            $subscription = $this->_get_subscription( $license->id );
+            if ( ! is_object( $subscription ) || ! $subscription->is_active() ) {
+                return;
+            }
+
+            $vars = array(
+                'id'                      => $this->_module_id,
+                'license'                 => $license,
+                'has_trial'               => $this->is_paid_trial(),
+                'is_license_deactivation' => $is_license_deactivation,
+            );
+
+            fs_require_template( 'forms/subscription-cancellation.php', $vars );
+        }
+
+        /**
+         * @author Leo Fajardo (@leorw)
+         * @since  2.0.2
+         */
+        function _add_premium_version_upgrade_selection_dialog_box() {
+            $modules_update = get_site_transient( $this->is_theme() ? 'update_themes' : 'update_plugins' );
+            if ( ! isset( $modules_update->response[ $this->_plugin_basename ] ) ) {
+                return;
+            }
+
+            $vars = array(
+                'id'          => $this->_module_id,
+                'new_version' => is_object( $modules_update->response[ $this->_plugin_basename ] ) ?
+                    $modules_update->response[ $this->_plugin_basename ]->new_version :
+                    $modules_update->response[ $this->_plugin_basename ]['new_version']
+            );
+
+            fs_require_template( 'forms/premium-versions-upgrade-metadata.php', $vars );
+            fs_require_once_template( 'forms/premium-versions-upgrade-handler.php', $vars );
+        }
+
+        /**
          * Displays the opt-out dialog box when the user clicks on the "Opt Out" link on the "Plugins"
          * page.
          *
@@ -10418,13 +11142,32 @@
 
         /**
          * @author Leo Fajardo (@leorw)
+         * @since  2.0.2
+         */
+        function _add_premium_version_upgrade_selection() {
+            if ( ! $this->is_user_admin() ) {
+                return;
+            }
+
+            if ( ! $this->is_premium() || $this->has_any_active_valid_license() ) {
+                // This is relevant only to the free versions and premium versions without an active license.
+                return;
+            }
+
+            if ( self::is_updates_page() || ( $this->is_plugin() && self::is_plugins_page() ) ) {
+                $this->_add_premium_version_upgrade_selection_action();
+            }
+        }
+
+        /**
+         * @author Leo Fajardo (@leorw)
          *
          * @since  1.1.9
          * @since  2.0.0 When a super-admin that hasn't connected before is network activating a license and excluding some of the sites for the license activation, go over the unselected sites in the network and if a site is not connected, skipped, nor delegated, if it's a freemium product then just skip the connection for the site, if it's a premium only product, delegate the connection and license activation to the site admin (Vova Feldman @svovaf).
          */
         function _activate_license_ajax_action() {
             $this->_logger->entrance();
-
+            
             $this->check_ajax_referer( 'activate_license' );
 
             $license_key = trim( fs_request_get( 'license_key' ) );
@@ -10506,7 +11249,7 @@
                         'license_key' => $fs->apply_filters( 'license_key', $license_key )
                     );
 
-                    $install = $api->call( '/', 'put', $params );
+                    $install = $api->call( $fs->add_show_pending( '/' ), 'put', $params );
 
                     if ( FS_Api::is_api_error( $install ) ) {
                         $error = FS_Api::is_api_error_object( $install ) ?
@@ -10535,6 +11278,7 @@
                     false,
                     false,
                     false,
+                    fs_request_get_bool( 'is_marketing_allowed', null ),
                     $sites
                 );
 
@@ -10596,6 +11340,10 @@
                         }
                     }
                 }
+            }
+
+            if ( false === $error && true === $this->_storage->require_license_activation ) {
+                $this->_storage->require_license_activation = false;
             }
 
             $result = array(
@@ -10668,6 +11416,7 @@
                                 false,
                                 false,
                                 false,
+                                fs_request_get_bool( 'is_marketing_allowed', null ),
                                 $sites_by_action['allow']
                             );
                         } else {
@@ -10691,7 +11440,7 @@
                     $next_page = $this->get_after_activation_url( 'after_network_activation_url' );
                 }
             } else {
-                $error = $this->get_text_inline( 'invalid_site_details_collection', 'Invalid site details collection.' );
+                $error = $this->get_text_inline( 'Invalid site details collection.', 'invalid_site_details_collection' );
             }
 
             $result = array(
@@ -10851,6 +11600,34 @@
         static function get_current_page() {
             if ( ! isset( self::$_pagenow ) ) {
                 global $pagenow;
+                if ( empty( $pagenow ) && is_admin() && is_multisite() ) {
+                    /**
+                     * It appears that `$pagenow` is not yet initialized in some network admin pages when this method
+                     * is called, so initialize it here using some pieces of code from `wp-includes/vars.php`.
+                     *
+                     * @author Leo Fajardo (@leorw)
+                     * @since 2.2.3
+                     */
+                    if ( is_network_admin() ) {
+                        preg_match( '#/wp-admin/network/?(.*?)$#i', $_SERVER['PHP_SELF'], $self_matches );
+                    } else if ( is_user_admin() ) {
+                        preg_match( '#/wp-admin/user/?(.*?)$#i', $_SERVER['PHP_SELF'], $self_matches );
+                    } else {
+                        preg_match( '#/wp-admin/?(.*?)$#i', $_SERVER['PHP_SELF'], $self_matches );
+                    }
+
+                    $pagenow = $self_matches[1];
+                    $pagenow = trim( $pagenow, '/' );
+                    $pagenow = preg_replace( '#\?.*?$#', '', $pagenow );
+                    if ( '' === $pagenow || 'index' === $pagenow || 'index.php' === $pagenow ) {
+                        $pagenow = 'index.php';
+                    } else {
+                        preg_match( '#(.*?)(/|$)#', $pagenow, $self_matches );
+                        $pagenow = strtolower( $self_matches[1] );
+                        if ( '.php' !== substr($pagenow, -4, 4) )
+                            $pagenow .= '.php'; // for Options +Multiviews: /wp-admin/themes/index.php (themes.php is queried)
+                    }
+                }
 
                 self::$_pagenow = $pagenow;
 
@@ -10880,6 +11657,26 @@
          */
         static function is_plugins_page() {
             return ( 'plugins.php' === self::get_current_page() );
+        }
+
+        /**
+         * @author Leo Fajardo (@leorw)
+         * @since  2.2.3
+         *
+         * @return bool
+         */
+        static function is_plugin_install_page() {
+            return ( 'plugin-install.php' === self::get_current_page() );
+        }
+
+        /**
+         * @author Leo Fajardo (@leorw)
+         * @since  2.0.2
+         *
+         * @return bool
+         */
+        static function is_updates_page() {
+            return ( 'update-core.php' === self::get_current_page() );
         }
 
         /**
@@ -11137,6 +11934,40 @@
          */
         function get_trial_url() {
             return $this->get_upgrade_url( WP_FS__PERIOD_ANNUALLY, true );
+        }
+
+        /**
+         * @author Leo Fajardo (@leorw)
+         * @since 2.1.4
+         *
+         * @param string $new_version
+         *
+         * @return string
+         */
+        function version_upgrade_checkout_link( $new_version ) {
+            if ( ! is_object( $this->_license ) ) {
+                $url = $this->pricing_url();
+
+                $purchase_license_text = $this->get_text_inline( 'Buy a license now', 'buy-license-now' );
+            } else {
+                $subscription = $this->_get_subscription( $this->_license->id );
+
+                $url = $this->checkout_url(
+                    is_object( $subscription ) ?
+                        ( 1 == $subscription->billing_cycle ? WP_FS__PERIOD_MONTHLY : WP_FS__PERIOD_ANNUALLY ) :
+                        WP_FS__PERIOD_LIFETIME,
+                    false,
+                    array( 'licenses' => $this->_license->quota )
+                );
+
+                $purchase_license_text = $this->get_text_inline( 'Renew your license now', 'renew-license-now' );
+            }
+
+            return sprintf(
+                $this->get_text_inline( '%s to access version %s security & feature updates, and support.', 'x-for-updates-and-support' ),
+                sprintf( '<a href="%s">%s</a>', $url, $purchase_license_text ),
+                $new_version
+            );
         }
 
         /**
@@ -11773,7 +12604,13 @@
              * @author Vova Feldman (@svovaf)
              */
             $args = array(
-                'public'   => 1,
+                /**
+                 * Commented out in order to handle the migration of site options whether the site is public or not.
+                 *
+                 * @author Leo Fajardo (@leorw)
+                 * @since 2.2.1
+                 */
+                // 'public'   => 1,
                 'archived' => 0,
                 'mature'   => 0,
                 'spam'     => 0,
@@ -11875,6 +12712,56 @@
         }
 
         /**
+         * Gets a map of module IDs that the given user has opted-in to.
+         *
+         * @author Leo Fajardo (@leorw)
+         * @since  2.1.0
+         *
+         * @param number $fs_user_id
+         *
+         * @return array {
+         * @key number $plugin_id
+         * @value bool Always true.
+         * }
+         */
+        private static function get_user_opted_in_module_ids_map( $fs_user_id ) {
+            self::$_static_logger->entrance();
+
+            if ( ! is_multisite() ) {
+                $installs = array_merge(
+                    self::get_all_sites( WP_FS__MODULE_TYPE_PLUGIN ),
+                    self::get_all_sites( WP_FS__MODULE_TYPE_THEME )
+                );
+            } else {
+                $sites = self::get_sites();
+
+                $installs = array();
+                foreach ( $sites as $site ) {
+                    $blog_id = self::get_site_blog_id( $site );
+
+                    $installs = array_merge(
+                        $installs,
+                        self::get_all_sites( WP_FS__MODULE_TYPE_PLUGIN, $blog_id ),
+                        self::get_all_sites( WP_FS__MODULE_TYPE_THEME, $blog_id )
+                    );
+                }
+            }
+
+            $module_ids_map = array();
+            foreach ( $installs as $install ) {
+                if ( is_object( $install ) &&
+                     FS_Site::is_valid_id( $install->id ) &&
+                     FS_User::is_valid_id( $install->user_id ) &&
+                     ( $install->user_id == $fs_user_id )
+                ) {
+                    $module_ids_map[ $install->plugin_id ] = true;
+                }
+            }
+
+            return $module_ids_map;
+        }
+
+        /**
          * @author Leo Fajardo (@leorw)
          *
          * @return null|array {
@@ -11919,7 +12806,7 @@
 
             self::$_accounts->set_site_blog_context( $blog_id );
             $this->_storage->set_site_blog_context( $blog_id );
-            $this->_storage->set_network_active( true, $this->is_delegated_connection( $blog_id ) );
+            $this->_storage->set_network_active( $this->_is_network_active, $this->is_delegated_connection( $blog_id ) );
 
             $this->_site = is_object( $install ) ?
                 $install :
@@ -11995,7 +12882,9 @@
         static function get_site_blog_id( &$site ) {
             return ( $site instanceof WP_Site ) ?
                 $site->blog_id :
-                $site['blog_id'];
+                ( is_object( $site ) && isset( $site->userblog_id ) ?
+                    $site->userblog_id :
+                    $site['blog_id'] );
         }
 
         /**
@@ -12866,6 +13755,12 @@
                 }
             }
 
+            if ( true === $this->_storage->require_license_activation &&
+                ! fs_request_get_bool( 'require_license', true )
+            ) {
+                $this->_storage->require_license_activation = false;
+            }
+
             if ( $this->is_theme() ) {
                 $this->_register_account_hooks();
             }
@@ -12932,6 +13827,30 @@
         }
 
         /**
+         * Get a sanitized array with the WordPress version, SDK version, and PHP version.
+         * Each version is trimmed after the 16th char.
+         *
+         * @author Vova Feldman (@svovaf)
+         * @since  2.2.1
+         *
+         * @return array
+         */
+        private function get_versions() {
+            $versions = array();
+            $versions['platform_version']             = get_bloginfo( 'version' );
+            $versions['sdk_version']                  = $this->version;
+            $versions['programming_language_version'] = phpversion();
+
+            foreach ( $versions as $k => $version ) {
+                if ( is_string( $versions[ $k ] ) && ! empty( $versions[ $k ] ) ) {
+                    $versions[ $k ] = substr( $versions[ $k ], 0, 16 );
+                }
+            }
+
+            return $versions;
+        }
+
+        /**
          * @author Vova Feldman (@svovaf)
          * @since  1.1.7.4
          *
@@ -12952,7 +13871,9 @@
                 // Return to the module's main page.
                 $this->get_after_activation_url( 'after_connect_url', array( 'fs_action' => $activation_action ) );
 
-            $params = array(
+            $versions = $this->get_versions();
+
+            $params = array_merge( $versions, array(
                 'user_firstname'               => $current_user->user_firstname,
                 'user_lastname'                => $current_user->user_lastname,
                 'user_nickname'                => $current_user->user_nicename,
@@ -12967,13 +13888,10 @@
                     'account',
                     array( 'fs_action' => 'sync_user' )
                 ), 'sync_user' ),
-                'platform_version'             => get_bloginfo( 'version' ),
-                'sdk_version'                  => $this->version,
-                'programming_language_version' => phpversion(),
                 'is_premium'                   => $this->is_premium(),
                 'is_active'                    => true,
                 'is_uninstalled'               => false,
-            );
+            ) );
 
             if ( true === $network_level_or_blog_id ) {
                 if ( ! isset( $override_with['sites'] ) ) {
@@ -13041,12 +13959,13 @@
          * @param string|bool $first
          * @param string|bool $last
          * @param string|bool $license_key
-         * @param bool        $is_uninstall       If "true", this means that the module is currently being uninstalled.
-         *                                        In this case, the user and site info will be sent to the server but no
-         *                                        data will be saved to the WP installation's database.
+         * @param bool        $is_uninstall         If "true", this means that the module is currently being uninstalled.
+         *                                          In this case, the user and site info will be sent to the server but no
+         *                                          data will be saved to the WP installation's database.
          * @param number|bool $trial_plan_id
-         * @param bool        $is_disconnected    Whether or not to opt in without tracking.
-         * @param array       $sites              If network-level opt-in, an array of containing details of sites.
+         * @param bool        $is_disconnected      Whether or not to opt in without tracking.
+         * @param null|bool   $is_marketing_allowed
+         * @param array       $sites                If network-level opt-in, an array of containing details of sites.
          *
          * @return string|object
          * @use    WP_Error
@@ -13059,6 +13978,7 @@
             $is_uninstall = false,
             $trial_plan_id = false,
             $is_disconnected = false,
+            $is_marketing_allowed = null,
             $sites = array()
         ) {
             $this->_logger->entrance();
@@ -13144,8 +14064,12 @@
                 }
             }
 
-            $params['is_disconnected'] = $is_disconnected;
-            $params['format']          = 'json';
+            if ( is_bool( $is_marketing_allowed ) ) {
+                $params['is_marketing_allowed'] = $is_marketing_allowed;
+            }
+
+            $params['is_disconnected']      = $is_disconnected;
+            $params['format']               = 'json';
 
             $request = array(
                 'method'  => 'POST',
@@ -13153,43 +14077,8 @@
                 'timeout' => WP_FS__DEBUG_SDK ? 60 : 30,
             );
 
-            $url = WP_FS__ADDRESS . '/action/service/user/install/';
-
-            if ( WP_FS__DEBUG_SDK || isset( $_COOKIE['XDEBUG_SESSION'] ) ) {
-                $url = add_query_arg( 'XDEBUG_SESSION_START', rand( 0, 9999999 ), $url );
-                $url = add_query_arg( 'XDEBUG_SESSION', 'PHPSTORM', $url );
-
-                $request['cookies'] = array(
-                    new WP_Http_Cookie( array(
-                        'name'  => 'XDEBUG_SESSION',
-                        'value' => 'PHPSTORM',
-                    ) )
-                );
-            }
-
-            $response = wp_remote_post( $url, $request );
-
-            if ( $response instanceof WP_Error ) {
-                if ( 'https://' === substr( $url, 0, 8 ) &&
-                     isset( $response->errors ) &&
-                     isset( $response->errors['http_request_failed'] )
-                ) {
-                    $http_error = strtolower( $response->errors['http_request_failed'][0] );
-
-                    if ( false !== strpos( $http_error, 'ssl' ) ||
-                         false !== strpos( $http_error, 'curl error 35' )
-                    ) {
-                        // Failed due to old version of cURL or Open SSL (SSLv3 is not supported by CloudFlare).
-                        $url = 'http://' . substr( $url, 8 );
-
-                        $response = wp_remote_post( $url, array(
-                            'method'  => 'POST',
-                            'body'    => $params,
-                            'timeout' => 15,
-                        ) );
-                    }
-                }
-            }
+            $url = $this->add_show_pending( WP_FS__ADDRESS . '/action/service/user/install/' );
+            $response = self::safe_remote_post( $url, $request );
 
             if ( is_wp_error( $response ) ) {
                 /**
@@ -13276,6 +14165,9 @@
                     $decoded->user_id,
                     $decoded->user_public_key,
                     $decoded->user_secret_key,
+                    ( isset( $decoded->is_marketing_allowed ) && ! is_null( $decoded->is_marketing_allowed ) ?
+                        $decoded->is_marketing_allowed :
+                        null ),
                     $decoded->install_id,
                     $decoded->install_public_key,
                     $decoded->install_secret_key,
@@ -13286,6 +14178,9 @@
                     $decoded->user_id,
                     $decoded->user_public_key,
                     $decoded->user_secret_key,
+                    ( isset( $decoded->is_marketing_allowed ) && ! is_null( $decoded->is_marketing_allowed ) ?
+                        $decoded->is_marketing_allowed :
+                        null ),
                     $decoded->installs,
                     false
                 );
@@ -13352,6 +14247,17 @@
 
             $this->_sync_plans();
 
+            if ( $this->_storage->handle_gdpr_admin_notice &&
+                 $this->should_handle_gdpr_admin_notice() &&
+                 FS_GDPR_Manager::instance()->should_show_opt_in_notice()
+            ) {
+                /**
+                 * Clear user lock after an opt-in.
+                 */
+                require_once WP_FS__DIR_INCLUDES . '/class-fs-user-lock.php';
+                FS_User_Lock::instance()->unlock();
+            }
+
             if ( 1 < count( $installs ) ) {
                 // Only network level opt-in can have more than one install.
                 $is_network_level_opt_in = true;
@@ -13365,6 +14271,8 @@
 
                 $this->do_action( 'after_account_connection', $user, $first_install );
             } else {
+                $this->_store_user();
+
                 // Map site addresses to their blog IDs.
                 $address_to_blog_map = $this->get_address_to_blog_map();
 
@@ -13559,6 +14467,7 @@
                             fs_request_get( 'user_id' ),
                             fs_request_get( 'user_public_key' ),
                             fs_request_get( 'user_secret_key' ),
+                            fs_request_get_bool( 'is_marketing_allowed', null ),
                             $pending_sites_info['blog_ids'],
                             $pending_sites_info['license_key'],
                             $pending_sites_info['trial_plan_id']
@@ -13568,6 +14477,7 @@
                             fs_request_get( 'user_id' ),
                             fs_request_get( 'user_public_key' ),
                             fs_request_get( 'user_secret_key' ),
+                            fs_request_get_bool( 'is_marketing_allowed', null ),
                             fs_request_get( 'install_id' ),
                             fs_request_get( 'install_public_key' ),
                             fs_request_get( 'install_secret_key' ),
@@ -13619,16 +14529,17 @@
          * @author Vova Feldman (@svovaf)
          * @since  1.1.7.4
          *
-         * @param number $user_id
-         * @param string $user_public_key
-         * @param string $user_secret_key
-         * @param number $install_id
-         * @param string $install_public_key
-         * @param string $install_secret_key
-         * @param bool   $redirect
-         * @param bool   $auto_install Since 1.2.1.7 If `true` and setting up an account with a valid license, will
-         *                             redirect (or return a URL) to the account page with a special parameter to
-         *                             trigger the auto installation processes.
+         * @param number    $user_id
+         * @param string    $user_public_key
+         * @param string    $user_secret_key
+         * @param bool|null $is_marketing_allowed
+         * @param number    $install_id
+         * @param string    $install_public_key
+         * @param string    $install_secret_key
+         * @param bool      $redirect
+         * @param bool      $auto_install Since 1.2.1.7 If `true` and setting up an account with a valid license, will
+         *                                redirect (or return a URL) to the account page with a special parameter to
+         *                                trigger the auto installation processes.
          *
          * @return string If redirect is `false`, returns the next page the user should be redirected to.
          */
@@ -13636,6 +14547,7 @@
             $user_id,
             $user_public_key,
             $user_secret_key,
+            $is_marketing_allowed,
             $install_id,
             $install_public_key,
             $install_secret_key,
@@ -13673,6 +14585,10 @@
             $site        = new FS_Site( $site_result );
             $this->_site = $site;
 
+            if ( ! is_null( $is_marketing_allowed ) ) {
+                $this->disable_opt_in_notice_and_lock_user();
+            }
+
             return $this->setup_account(
                 $this->_user,
                 $this->_site,
@@ -13687,13 +14603,14 @@
          * @author Leo Fajardo (@leorw)
          * @since  2.0.0
          *
-         * @param number $user_id
-         * @param string $user_public_key
-         * @param string $user_secret_key
-         * @param array  $site_ids
-         * @param bool   $license_key
-         * @param bool   $trial_plan_id
-         * @param bool   $redirect
+         * @param number    $user_id
+         * @param string    $user_public_key
+         * @param string    $user_secret_key
+         * @param bool|null $is_marketing_allowed
+         * @param array     $site_ids
+         * @param bool      $license_key
+         * @param bool      $trial_plan_id
+         * @param bool      $redirect
          *
          * @return string If redirect is `false`, returns the next page the user should be redirected to.
          */
@@ -13701,12 +14618,17 @@
             $user_id,
             $user_public_key,
             $user_secret_key,
+            $is_marketing_allowed,
             $site_ids,
             $license_key = false,
             $trial_plan_id = false,
             $redirect = true
         ) {
             $user = $this->setup_user( $user_id, $user_public_key, $user_secret_key );
+
+            if ( ! is_null( $is_marketing_allowed ) ) {
+                $this->disable_opt_in_notice_and_lock_user();
+            }
 
             $sites = array();
             foreach ( $site_ids as $site_id ) {
@@ -13722,14 +14644,15 @@
          * @author Vova Feldman (@svovaf)
          * @since  2.0.0
          *
-         * @param number   $user_id
-         * @param string   $user_public_key
-         * @param string   $user_secret_key
-         * @param object[] $installs
-         * @param bool     $redirect
-         * @param bool     $auto_install Since 1.2.1.7 If `true` and setting up an account with a valid license, will
-         *                               redirect (or return a URL) to the account page with a special parameter to
-         *                               trigger the auto installation processes.
+         * @param number    $user_id
+         * @param string    $user_public_key
+         * @param string    $user_secret_key
+         * @param bool|null $is_marketing_allowed
+         * @param object[]  $installs
+         * @param bool      $redirect
+         * @param bool      $auto_install Since 1.2.1.7 If `true` and setting up an account with a valid license, will
+         *                                redirect (or return a URL) to the account page with a special parameter to
+         *                                trigger the auto installation processes.
          *
          * @return string If redirect is `false`, returns the next page the user should be redirected to.
          */
@@ -13737,11 +14660,16 @@
             $user_id,
             $user_public_key,
             $user_secret_key,
+            $is_marketing_allowed,
             array $installs,
             $redirect = true,
             $auto_install = false
         ) {
             $this->setup_user( $user_id, $user_public_key, $user_secret_key );
+
+            if ( ! is_null( $is_marketing_allowed ) ) {
+                $this->disable_opt_in_notice_and_lock_user();
+            }
 
             $install_ids = array();
 
@@ -14145,15 +15073,16 @@
                 unset( $parent_fs->_storage->is_pending_activation );
             }
 
+            // Get user information based on parent's plugin.
+            $user = $this->get_user();
+
             // First of all, set site info - otherwise we won't
             // be able to invoke API calls.
             $parent_fs->_site = new FS_Site( $parent_install );
+            $parent_fs->_user = $user;
 
             // Sync add-on plans.
             $parent_fs->_sync_plans();
-
-            // Get user information based on parent's plugin.
-            $user = $this->get_user();
 
             $parent_fs->_set_account( $user, $parent_fs->_site );
         }
@@ -14276,7 +15205,8 @@
         function _redirect_on_clicked_menu_link() {
             $this->_logger->entrance();
 
-            $page = strtolower( isset( $_REQUEST['page'] ) ? $_REQUEST['page'] : '' );
+            $page = fs_request_get('page');
+            $page = is_string($page) ? strtolower($page) : '';
 
             $this->_logger->log( 'page = ' . $page );
 
@@ -14304,7 +15234,7 @@
 
             $hook = false;
 
-            if ( ! $this->_menu->has_menu() ) {
+            if ( ! $this->has_settings_menu() ) {
                 // Add the opt-in page without a menu item.
                 $hook = FS_Admin_Menu_Manager::add_subpage(
                     null,
@@ -14517,13 +15447,15 @@
         private function add_submenu_items() {
             $this->_logger->entrance();
 
+            $is_activation_mode = $this->is_activation_mode();
+
             if ( $this->is_addon() ) {
                 // No submenu items for add-ons.
                 $add_submenu_items = false;
             } else if ( $this->is_free_wp_org_theme() && ! fs_is_network_admin() ) {
                 // Also add submenu items when running in a free .org theme so the tabs will be visible.
                 $add_submenu_items = true;
-            } else if ( $this->is_activation_mode() && ! $this->is_free_wp_org_theme() ) {
+            } else if ( $is_activation_mode && ! $this->is_free_wp_org_theme() ) {
                 $add_submenu_items = false;
             } else if ( fs_is_network_admin() ) {
                 /**
@@ -14554,8 +15486,16 @@
                         $this->is_submenu_item_visible( 'affiliation' )
                     );
                 }
+            }
 
-                if ( $this->is_registered() ) {
+            if ( $add_submenu_items ||
+                ( $is_activation_mode &&
+                    $this->is_only_premium() &&
+                    $this->is_admin_page( 'account' ) &&
+                    fs_request_is_action( $this->get_unique_affix() . '_sync_license' )
+                )
+            ) {
+                if ( ! WP_FS__DEMO_MODE && $this->is_registered() ) {
                     $show_account = (
                         $this->is_submenu_item_visible( 'account' ) &&
                         /**
@@ -14573,10 +15513,12 @@
                         'account',
                         array( &$this, '_account_page_load' ),
                         WP_FS__DEFAULT_PRIORITY,
-                        $show_account
+                        ( $add_submenu_items && $show_account )
                     );
                 }
+            }
 
+            if ( $add_submenu_items ) {
                 // Add contact page.
                 $this->add_submenu_item(
                     $this->get_text_inline( 'Contact Us', 'contact-us' ),
@@ -14601,48 +15543,64 @@
                         $this->is_submenu_item_visible( 'addons' )
                     );
                 }
-
-                $show_pricing = (
-                    $this->is_submenu_item_visible( 'pricing' ) &&
-                    $this->is_pricing_page_visible()
-                );
-
-                $pricing_cta_text = $this->get_pricing_cta_label();
-                $pricing_class    = 'upgrade-mode';
-                if ( $show_pricing ) {
-                    if ( $this->is_in_trial_promotion() &&
-                         ! $this->is_paying_or_trial()
-                    ) {
-                        // If running a trial promotion, modify the pricing to load the trial.
-                        $pricing_class = 'trial-mode';
-                    } else if ( $this->is_paying() ) {
-                        $pricing_class = '';
-                    }
-                }
-
-                // Add upgrade/pricing page.
-                $this->add_submenu_item(
-                    $pricing_cta_text . '&nbsp;&nbsp;' . ( is_rtl() ? '&#x2190;' : '&#x27a4;' ),
-                    array( &$this, '_pricing_page_render' ),
-                    $this->get_plugin_name() . ' &ndash; ' . $this->get_text_x_inline( 'Pricing', 'noun', 'pricing' ),
-                    'manage_options',
-                    'pricing',
-                    'Freemius::_clean_admin_content_section',
-                    WP_FS__LOWEST_PRIORITY,
-                    $show_pricing,
-                    $pricing_class
-                );
             }
 
-            if ( 0 < count( $this->_menu_items ) ) {
-                if ( ! $this->_menu->is_top_level() ) {
-                    fs_enqueue_local_style( 'fs_common', '/admin/common.css' );
+            if ( $add_submenu_items ||
+                ( $is_activation_mode && $this->is_only_premium() && $this->is_admin_page( 'pricing' ) )
+            ) {
+                if ( ! WP_FS__DEMO_MODE ) {
+                    $show_pricing = (
+                        $this->is_submenu_item_visible( 'pricing' ) &&
+                        $this->is_pricing_page_visible()
+                    );
 
-                    // Append submenu items right after the plugin's submenu item.
-                    $this->order_sub_submenu_items();
-                } else {
-                    // Append submenu items.
-                    $this->embed_submenu_items();
+                    $pricing_cta_text = $this->get_pricing_cta_label();
+                    $pricing_class    = 'upgrade-mode';
+                    if ( $show_pricing ) {
+                        if ( $this->is_in_trial_promotion() &&
+                             ! $this->is_paying_or_trial()
+                        ) {
+                            // If running a trial promotion, modify the pricing to load the trial.
+                            $pricing_class = 'trial-mode';
+                        } else if ( $this->is_paying() ) {
+                            $pricing_class = '';
+                        }
+                    }
+
+                    // Add upgrade/pricing page.
+                    $this->add_submenu_item(
+                        $pricing_cta_text . '&nbsp;&nbsp;' . ( is_rtl() ? $this->get_text_x_inline( '&#x2190;', 'ASCII arrow left icon', 'symbol_arrow-left' ) : $this->get_text_x_inline( '&#x27a4;', 'ASCII arrow right icon', 'symbol_arrow-right' ) ),
+                        array( &$this, '_pricing_page_render' ),
+                        $this->get_plugin_name() . ' &ndash; ' . $this->get_text_x_inline( 'Pricing', 'noun', 'pricing' ),
+                        'manage_options',
+                        'pricing',
+                        'Freemius::_clean_admin_content_section',
+                        WP_FS__LOWEST_PRIORITY,
+                        ( $add_submenu_items && $show_pricing ),
+                        $pricing_class
+                    );
+                }
+            }
+
+            if ( ! $is_activation_mode || ( true !== $this->_storage->require_license_activation ) ) {
+                /**
+                 * Add the other menu items if there are any when not in activation mode or license activation is not
+                 * required (license activation is required for registered or anonymous users after activating the
+                 * premium version when the site is not in trial mode or there's no active valid license).
+                 *
+                 * @author Leo Fajardo (@leorw)
+                 * @since 2.2.1
+                 */
+                if ( 0 < count( $this->_menu_items ) ) {
+                    if ( ! $this->_menu->is_top_level() ) {
+                        fs_enqueue_local_style( 'fs_common', '/admin/common.css' );
+
+                        // Append submenu items right after the plugin's submenu item.
+                        $this->order_sub_submenu_items();
+                    } else {
+                        // Append submenu items.
+                        $this->embed_submenu_items();
+                    }
                 }
             }
         }
@@ -14668,16 +15626,6 @@
 
             foreach ( $this->_menu_items as $priority => $items ) {
                 foreach ( $items as $item ) {
-                    if ( $item['show_submenu'] && $is_first_submenu_item ) {
-                        if ( $this->_is_network_active && ! empty( $this->_dynamically_added_top_level_page_hook_name ) ) {
-                            $item['menu_slug'] = '';
-
-                            $this->_menu->override_menu_item( $item['render_function'] );
-                        }
-
-                        $is_first_submenu_item = false;
-                    }
-
                     $capability = ( ! empty( $item['capability'] ) ? $item['capability'] : $top_level_menu_capability );
 
                     $menu_item = sprintf(
@@ -14688,12 +15636,13 @@
                         $item['menu_title']
                     );
 
-                    $menu_slug = $this->_menu->get_slug( $item['menu_slug'] );
+                    $top_level_menu_slug = $this->get_top_level_menu_slug();
+                    $menu_slug           = $this->_menu->get_slug( $item['menu_slug'] );
 
                     if ( ! isset( $item['url'] ) ) {
                         $hook = FS_Admin_Menu_Manager::add_subpage(
                             $item['show_submenu'] ?
-                                $this->get_top_level_menu_slug() :
+                                $top_level_menu_slug :
                                 null,
                             $item['page_title'],
                             $menu_item,
@@ -14708,7 +15657,7 @@
                     } else {
                         FS_Admin_Menu_Manager::add_subpage(
                             $item['show_submenu'] ?
-                                $this->get_top_level_menu_slug() :
+                                $top_level_menu_slug :
                                 null,
                             $item['page_title'],
                             $menu_item,
@@ -14716,6 +15665,24 @@
                             $menu_slug,
                             array( $this, '' )
                         );
+                    }
+
+                    if ( $item['show_submenu'] && $is_first_submenu_item ) {
+                        if ( $this->_is_network_active && ! empty( $this->_dynamically_added_top_level_page_hook_name ) ) {
+                            /**
+                             * If the top-level menu has been dynamically created, remove the first submenu item that
+                             * WordPress automatically creates when there's no submenu item whose slug matches the
+                             * parent's. In the following example, the `Awesome Plugin` submenu item will be removed.
+                             *
+                             * Awesome Plugin
+                             *     - Awesome Plugin <-- we want to remove this since there's no real setting page for the top-level
+                             *
+                             * @author Leo Fajardo (@leorw)
+                             */
+                            remove_submenu_page( $top_level_menu_slug, $top_level_menu_slug );
+                        }
+
+                        $is_first_submenu_item = false;
                     }
                 }
             }
@@ -15328,7 +16295,8 @@
                 return;
             }
 
-            $encrypted_site = clone ( is_object( $site ) ? $site : $this->_site );
+            $site_clone     = is_object( $site ) ? $site : $this->_site;
+            $encrypted_site = clone $site_clone;
 
             $sites = self::get_all_sites( $this->_module_type, $network_level_or_blog_id );
 
@@ -15696,7 +16664,7 @@
             /**
              * @since 1.2.3 When running in DEV mode, retrieve pending plans as well.
              */
-            $result = $api->get( "/plugins/{$this->_module_id}/plans.json?show_pending=" . ( $this->has_secret_key() ? 'true' : 'false' ), true );
+            $result = $api->get( $this->add_show_pending( "/plugins/{$this->_module_id}/plans.json" ), true );
 
             if ( $this->is_api_result_object( $result, 'plans' ) && is_array( $result->plans ) ) {
                 for ( $i = 0, $len = count( $result->plans ); $i < $len; $i ++ ) {
@@ -15958,11 +16926,12 @@
          * @param bool|number $plugin_id
          * @param bool        $flush      Since 1.1.7.3
          * @param int         $expiration Since 1.2.2.7
+         * @param bool|string $newer_than Since 2.2.1
          *
          * @return object|false New plugin tag info if exist.
          */
-        private function _fetch_newer_version( $plugin_id = false, $flush = true, $expiration = WP_FS__TIME_24_HOURS_IN_SEC ) {
-            $latest_tag = $this->_fetch_latest_version( $plugin_id, $flush, $expiration );
+        private function _fetch_newer_version( $plugin_id = false, $flush = true, $expiration = WP_FS__TIME_24_HOURS_IN_SEC, $newer_than = false ) {
+            $latest_tag = $this->_fetch_latest_version( $plugin_id, $flush, $expiration, $newer_than );
 
             if ( ! is_object( $latest_tag ) ) {
                 return false;
@@ -15987,17 +16956,18 @@
          * @param bool|number $plugin_id
          * @param bool        $flush      Since 1.1.7.3
          * @param int         $expiration Since 1.2.2.7
+         * @param bool|string $newer_than Since 2.2.1
          *
          * @return bool|FS_Plugin_Tag
          */
-        function get_update( $plugin_id = false, $flush = true, $expiration = WP_FS__TIME_24_HOURS_IN_SEC ) {
+        function get_update( $plugin_id = false, $flush = true, $expiration = WP_FS__TIME_24_HOURS_IN_SEC, $newer_than = false ) {
             $this->_logger->entrance();
 
             if ( ! is_numeric( $plugin_id ) ) {
                 $plugin_id = $this->_plugin->id;
             }
 
-            $this->check_updates( true, $plugin_id, $flush, $expiration );
+            $this->check_updates( true, $plugin_id, $flush, $expiration, $newer_than );
             $updates = $this->get_all_updates();
 
             return isset( $updates[ $plugin_id ] ) && is_object( $updates[ $plugin_id ] ) ? $updates[ $plugin_id ] : false;
@@ -16026,12 +16996,60 @@
          * @since  1.2.1
          */
         function has_active_valid_license() {
+            return self::is_active_valid_license( $this->_license );
+        }
+
+        /**
+         * Check if a given license is active & valid (not expired).
+         *
+         * @author Vova Feldman (@svovaf)
+         * @since  2.1.3
+         *
+         * @param FS_Plugin_License $license
+         *
+         * @return bool
+         */
+        private static function is_active_valid_license( $license ) {
             return (
-                is_object( $this->_license ) &&
-                is_numeric( $this->_license->id ) &&
-                $this->_license->is_active() &&
-                $this->_license->is_valid()
+                is_object( $license ) &&
+                FS_Plugin_License::is_valid_id( $license->id ) &&
+                $license->is_active() &&
+                $license->is_valid()
             );
+        }
+
+        /**
+         * Checks if there's any site that is associated with an active & valid license.
+         * This logic is used to determine if the admin can download the premium code base from a network level admin.
+         *
+         * @author Vova Feldman (@svovaf)
+         * @since  2.1.3
+         *
+         * @return bool
+         */
+        function has_any_active_valid_license() {
+            if ( ! fs_is_network_admin() ) {
+                return $this->has_active_valid_license();
+            }
+
+            $installs            = $this->get_blog_install_map();
+            $all_plugin_licenses = self::get_all_licenses( $this->_module_id );
+
+            foreach ( $installs as $blog_id => $install ) {
+                if ( ! FS_Plugin_License::is_valid_id( $install->license_id ) ) {
+                    continue;
+                }
+
+                foreach ( $all_plugin_licenses as $license ) {
+                    if ( $license->id == $install->license_id ) {
+                        if ( self::is_active_valid_license( $license ) ) {
+                            return true;
+                        }
+                    }
+                }
+            }
+
+            return false;
         }
 
         /**
@@ -16102,8 +17120,11 @@
          *                                     the admin.
          * @param bool $is_context_single_site @since 2.0.0. This is used when syncing a license for a single install from the
          *                                     network-level "Account" page.
+         * @param int|null $current_blog_id    @since 2.2.3. This is passed from the `execute_cron` method and used by the
+         *                                     `_sync_plugin_license` method in order to switch to the previous blog when sending
+         *                                      updates for a single site in case `execute_cron` has switched to a different blog.
          */
-        private function _sync_license( $background = false, $is_context_single_site = false ) {
+        private function _sync_license( $background = false, $is_context_single_site = false, $current_blog_id = null ) {
             $this->_logger->entrance();
 
             $plugin_id = fs_request_get( 'plugin_id', $this->get_id() );
@@ -16113,7 +17134,7 @@
             if ( $is_addon_sync ) {
                 $this->_sync_addon_license( $plugin_id, $background );
             } else {
-                $this->_sync_plugin_license( $background, true, $is_context_single_site );
+                $this->_sync_plugin_license( $background, true, $is_context_single_site, $current_blog_id );
             }
 
             $this->do_action( 'after_account_plan_sync', $this->get_plan_name() );
@@ -16164,7 +17185,7 @@
                 $this->_update_licenses( $licenses, $addon->id );
 
                 if ( ! $this->is_addon_installed( $addon->id ) && FS_License_Manager::has_premium_license( $licenses ) ) {
-                    $plans_result = $this->get_api_site_or_plugin_scope()->get( "/addons/{$addon_id}/plans.json" );
+                    $plans_result = $this->get_api_site_or_plugin_scope()->get( $this->add_show_pending( "/addons/{$addon_id}/plans.json" ) );
 
                     if ( ! isset( $plans_result->error ) ) {
                         $plans = array();
@@ -16203,11 +17224,15 @@
          * @param bool $is_context_single_site Since 2.0.0. This is used when sending an update for a single install and
          *                                     syncing its license from the network-level "Account" page (e.g.: after
          *                                     activating a license only for the single install).
+         * @param int|null $current_blog_id    Since 2.2.3. This is passed from the `execute_cron` method so that it
+         *                                     can be used here to switch to the previous blog in case `execute_cron`
+         *                                     has switched to a different blog.
          */
         private function _sync_plugin_license(
             $background = false,
             $send_installs_update = true,
-            $is_context_single_site = false
+            $is_context_single_site = false,
+            $current_blog_id = null
         ) {
             $this->_logger->entrance();
 
@@ -16224,6 +17249,16 @@
                  * @todo This line will execute install sync on a daily basis, even if running the free version (for opted-in users). The reason we want to keep it that way is for cases when the user was a paying customer, then there was a failure in subscription payment, and then after some time the payment was successful. This could be heavily optimized. For example, we can skip the $flush if the current install was never associated with a paid version.
                  */
                 if ( $is_site_level_sync ) {
+                    /**
+                     * Switch to the previous blog since `execute_cron` may have switched to a different blog.
+                     *
+                     * @author Leo Fajardo (@leorw)
+                     * @since 2.2.3
+                     */
+                    if ( is_numeric( $current_blog_id ) ) {
+                        $this->switch_to_blog( $current_blog_id );
+                    }
+
                     $result   = $this->send_install_update( array(), true );
                     $is_valid = $this->is_api_result_entity( $result );
                 } else {
@@ -16492,6 +17527,7 @@
                             'trial_promotion',
                             'trial_expired',
                             'activation_complete',
+                            'license_expired',
                         ) );
                         break;
                     case 'changed':
@@ -16512,7 +17548,10 @@
                         break;
                     case 'downgraded':
                         $this->_admin_notices->add_sticky(
-                            sprintf( $this->get_text_inline( 'Your license has expired. You can still continue using the free %s forever.', 'license-expired-blocking-message' ), $this->_module_type ),
+                            ($this->has_free_plan() ?
+                                sprintf( $this->get_text_inline( 'Your license has expired. You can still continue using the free %s forever.', 'license-expired-blocking-message' ), $this->_module_type ) :
+                                /* translators: %1$s: product title; %2$s, %3$s: wrapping HTML anchor element; %4$s: 'plugin', 'theme', or 'add-on'. */
+                                sprintf( $this->get_text_inline( 'Your license has expired. %1$sUpgrade now%2$s to continue using the %3$s without interruptions.', 'license-expired-blocking-message_premium-only' ), sprintf('<a href="%s">', $this->pricing_url()), '</a>', $this->get_module_label(true) ) ),
                             'license_expired',
                             $hmm_text
                         );
@@ -16555,7 +17594,10 @@
                         break;
                     case 'trial_expired':
                         $this->_admin_notices->add_sticky(
-                            $this->get_text_inline( 'Your trial has expired. You can still continue using all our free features.', 'trial-expired-message' ),
+                            ($this->has_free_plan() ?
+                                $this->get_text_inline( 'Your free trial has expired. You can still continue using all our free features.', 'trial-expired-message' ) :
+                                /* translators: %1$s: product title; %2$s, %3$s: wrapping HTML anchor element; %4$s: 'plugin', 'theme', or 'add-on'. */
+                                sprintf( $this->get_text_inline( 'Your free trial has expired. %1$sUpgrade now%2$s to continue using the %3$s without interruptions.', 'trial-expired-message_premium-only' ), sprintf('<a href="%s">', $this->pricing_url()), '</a>', $this->get_module_label(true))),
                             'trial_expired',
                             $hmm_text
                         );
@@ -16726,6 +17768,18 @@
             $api     = $this->get_api_site_scope();
             $license = $api->call( "/licenses/{$this->_site->license_id}.json", 'delete' );
 
+            $this->handle_license_deactivation_result( $license, $hmm_text, $show_notice );
+        }
+
+        /**
+         * @author Leo Fajardo (@leorw)
+         * @since 2.2.1
+         *
+         * @param FS_Plugin_License $license
+         * @param bool|string       $hmm_text
+         * @param bool              $show_notice
+         */
+        private function handle_license_deactivation_result( $license, $hmm_text = false, $show_notice = true ) {
             if ( isset( $license->error ) ) {
                 $this->_admin_notices->add(
                     $this->get_text_inline( 'It looks like the license deactivation failed.', 'license-deactivation-failed-message' ) . '<br> ' .
@@ -16746,7 +17800,7 @@
                 }
             }
 
-            // Updated site plan to default.
+            // Update site plan to default.
             $this->_sync_plans();
             $this->_site->plan_id = $this->_plans[0]->id;
             // Unlink license from site.
@@ -16773,13 +17827,17 @@
          * @author Vova Feldman (@svovaf)
          * @since  1.0.4
          *
+         * @return object
+         *
          * @uses   FS_Api
          */
         private function _downgrade_site() {
             $this->_logger->entrance();
 
+            $deactivate_license = fs_request_get_bool( 'deactivate_license' );
+
             $api  = $this->get_api_site_scope();
-            $site = $api->call( 'downgrade.json', 'put' );
+            $site = $api->call( 'downgrade.json', 'put', array( 'deactivate_license' => $deactivate_license ) );
 
             $plan_downgraded = false;
             $plan            = false;
@@ -16797,29 +17855,47 @@
                                    ( is_object( $subscription ) && ! isset( $subscription->error ) && ! $subscription->is_active() );
             } else {
                 // handle different error cases.
-
+                $this->handle_license_deactivation_result(
+                    $site,
+                    $this->get_text_x_inline( 'Hmm', 'something somebody says when they are thinking about what you have just said.', 'hmm' ) . '...'
+                );
             }
 
-            if ( $plan_downgraded ) {
-                // Remove previous sticky message about upgrade (if exist).
-                $this->_admin_notices->remove_sticky( 'plan_upgraded' );
-
-                $this->_admin_notices->add(
-                    sprintf( $this->get_text_inline( 'Your plan was successfully downgraded. Your %s plan license will expire in %s.', 'plan-x-downgraded-message' ),
-                        $plan->title,
-                        human_time_diff( time(), strtotime( $this->_license->expiration ) )
+            if ( ! $plan_downgraded ) {
+                return (object) array(
+                    'error' => (object) array(
+                        'message' => $this->get_text_inline( 'Seems like we are having some temporary issue with your subscription cancellation. Please try again in few minutes.', 'subscription-cancellation-failure-message' )
                     )
                 );
-
-                // Store site updates.
-                $this->_store_site();
-            } else {
-                $this->_admin_notices->add(
-                    $this->get_text_inline( 'Seems like we are having some temporary issue with your plan downgrade. Please try again in few minutes.', 'plan-downgraded-failure-message' ),
-                    $this->get_text_x_inline( 'Oops', 'exclamation', 'oops' ) . '...',
-                    'error'
-                );
             }
+
+            // Remove previous sticky message about upgrade (if exist).
+            $this->_admin_notices->remove_sticky( 'plan_upgraded' );
+
+            $this->_admin_notices->add(
+                sprintf( $this->get_text_inline( 'Your subscription was successfully cancelled. Your %s plan license will expire in %s.', 'plan-x-downgraded-message' ),
+                    $plan->title,
+                    human_time_diff( time(), strtotime( $this->_license->expiration ) )
+                )
+            );
+
+            // Store site updates.
+            $this->_store_site();
+
+            if ( $deactivate_license &&
+                 ! FS_Plugin_License::is_valid_id( $site->license_id )
+            ) {
+                if ( $this->_site->is_localhost() ) {
+                    $this->_license->activated_local = max( 0, $this->_license->activated_local - 1 );
+                } else {
+                    $this->_license->activated = max( 0, $this->_license->activated - 1 );
+                }
+
+                // Handle successful license deactivation result.
+                $this->handle_license_deactivation_result( $this->_license );
+            }
+
+            return $site;
         }
 
         /**
@@ -16926,22 +18002,19 @@
          * @author Vova Feldman (@svovaf)
          * @since  1.0.9
          *
+         * @return object
+         *
          * @uses   FS_Api
          */
         private function _cancel_trial() {
             $this->_logger->entrance();
 
-            // Alias.
-            $oops_text = $this->get_text_x_inline( 'Oops', 'exclamation', 'oops' ) . '...';
-
             if ( ! $this->is_trial() ) {
-                $this->_admin_notices->add(
-                    $this->get_text_inline( 'It looks like you are not in trial mode anymore so there\'s nothing to cancel :)', 'trial-cancel-no-trial-message' ),
-                    $oops_text,
-                    'error'
+                return (object) array(
+                    'error' => (object) array(
+                        'message' => $this->get_text_inline( 'It looks like you are not in trial mode anymore so there\'s nothing to cancel :)', 'trial-cancel-no-trial-message' )
+                    )
                 );
-
-                return;
             }
 
             $trial_plan = $this->get_trial_plan();
@@ -16972,31 +18045,33 @@
                 // @todo handle different error cases.
             }
 
-            if ( $trial_cancelled ) {
-                // Remove previous sticky messages about upgrade or trial (if exist).
-                $this->_admin_notices->remove_sticky( array(
-                    'trial_started',
-                    'trial_promotion',
-                    'plan_upgraded',
-                ) );
-
-                // Store site updates.
-                $this->_store_site();
-
-                if ( ! $this->is_addon() ||
-                     ! $this->deactivate_premium_only_addon_without_license( true )
-                ) {
-                    $this->_admin_notices->add(
-                        sprintf( $this->get_text_inline( 'Your %s free trial was successfully cancelled.', 'trial-cancel-message' ), $trial_plan->title )
-                    );
-                }
-            } else {
-                $this->_admin_notices->add(
-                    $this->get_text_inline( 'Seems like we are having some temporary issue with your trial cancellation. Please try again in few minutes.', 'trial-cancel-failure-message' ),
-                    $oops_text,
-                    'error'
+            if ( ! $trial_cancelled ) {
+                return (object) array(
+                    'error' => (object) array(
+                        'message' => $this->get_text_inline( 'Seems like we are having some temporary issue with your trial cancellation. Please try again in few minutes.', 'trial-cancel-failure-message' )
+                    )
                 );
             }
+
+            // Remove previous sticky messages about upgrade or trial (if exist).
+            $this->_admin_notices->remove_sticky( array(
+                'trial_started',
+                'trial_promotion',
+                'plan_upgraded',
+            ) );
+
+            // Store site updates.
+            $this->_store_site();
+
+            if ( ! $this->is_addon() ||
+                 ! $this->deactivate_premium_only_addon_without_license( true )
+            ) {
+                $this->_admin_notices->add(
+                    sprintf( $this->get_text_inline( 'Your %s free trial was successfully cancelled.', 'trial-cancel-message' ), $trial_plan->title )
+                );
+            }
+
+            return $site;
         }
 
         /**
@@ -17020,7 +18095,7 @@
          * @return bool
          */
         private function _can_download_premium() {
-            return $this->has_active_valid_license() ||
+            return $this->has_any_active_valid_license() ||
                    ( $this->is_trial() && ! $this->get_trial_plan()->is_free() );
         }
 
@@ -17040,9 +18115,10 @@
 
             $is_premium = null;
             if ( ! $is_addon ) {
-                $is_premium = $this->_can_download_premium();
+                $is_premium = ( $this->is_premium() || $this->_can_download_premium() );
             } else if ( $this->is_addon_activated( $addon_id ) ) {
-                $is_premium = self::get_instance_by_id( $addon_id )->_can_download_premium();
+                $fs_addon   = self::get_instance_by_id( $addon_id );
+                $is_premium = ( $fs_addon->is_premium() || $fs_addon->_can_download_premium() );
             }
 
             // If add-on, then append add-on ID.
@@ -17066,15 +18142,19 @@
          * @since  1.0.4
          *
          * @param bool|number $addon_id
-         * @param bool        $flush      Since 1.1.7.3
-         * @param int         $expiration Since 1.2.2.7
+         * @param bool        $flush        Since 1.1.7.3
+         * @param int         $expiration   Since 1.2.2.7
+         * @param bool|string $newer_than   Since 2.2.1
+         * @param bool|string $fetch_readme Since 2.2.1
          *
          * @return object|false Plugin latest tag info.
          */
         function _fetch_latest_version(
             $addon_id = false,
             $flush = true,
-            $expiration = WP_FS__TIME_24_HOURS_IN_SEC
+            $expiration = WP_FS__TIME_24_HOURS_IN_SEC,
+            $newer_than = false,
+            $fetch_readme = true
         ) {
             $this->_logger->entrance();
 
@@ -17125,8 +18205,18 @@
                 $this->switch_to_blog( $switch_to_blog_id );
             }
 
+            $latest_version_endpoint = $this->_get_latest_version_endpoint( $addon_id, 'json' );
+
+            if ( ! empty( $newer_than ) ) {
+                $latest_version_endpoint = add_query_arg( 'newer_than', $newer_than, $latest_version_endpoint );
+            }
+
+            if ( true === $fetch_readme ) {
+                $latest_version_endpoint = add_query_arg( 'readme', 'true', $latest_version_endpoint );
+            }
+
             $tag = $this->get_api_site_or_plugin_scope()->get(
-                $this->_get_latest_version_endpoint( $addon_id, 'json' ),
+                $latest_version_endpoint,
                 $flush,
                 $expiration
             );
@@ -17238,9 +18328,15 @@
 
             if ( ! empty( $plugin_id ) ) {
                 $params['plugin_id'] = $plugin_id;
+            } else if ( $this->is_addon() ) {
+                $params['plugin_id'] = $this->get_id();
             }
 
-            return $this->get_account_url( 'download_latest', $params );
+            $fs = $this->is_addon() ?
+                $this->get_parent_instance() :
+                $this;
+
+            return $fs->get_account_url( 'download_latest', $params );
         }
 
         #endregion Download Plugin ------------------------------------------------------------------
@@ -17256,17 +18352,19 @@
          * @param bool|number $plugin_id
          * @param bool        $flush      Since 1.1.7.3
          * @param int         $expiration Since 1.2.2.7
+         * @param bool|string $newer_than Since 2.2.1
          */
         private function check_updates(
             $background = false,
             $plugin_id = false,
             $flush = true,
-            $expiration = WP_FS__TIME_24_HOURS_IN_SEC
+            $expiration = WP_FS__TIME_24_HOURS_IN_SEC,
+            $newer_than = false
         ) {
             $this->_logger->entrance();
 
             // Check if there's a newer version for download.
-            $new_version = $this->_fetch_newer_version( $plugin_id, $flush, $expiration );
+            $new_version = $this->_fetch_newer_version( $plugin_id, $flush, $expiration, $newer_than );
 
             $update = null;
             if ( is_object( $new_version ) ) {
@@ -17316,19 +18414,21 @@
 
             $api = $this->get_api_site_or_plugin_scope();
 
+            $path = $this->add_show_pending( '/addons.json?enriched=true' );
+
             /**
              * @since 1.2.1
              *
              * If there's a cached version of the add-ons and not asking
              * for a flush, just use the currently stored add-ons.
              */
-            if ( ! $flush && $api->is_cached( '/addons.json?enriched=true' ) ) {
+            if ( ! $flush && $api->is_cached( $path ) ) {
                 $addons = self::get_all_addons();
 
                 return $addons[ $this->_plugin->id ];
             }
 
-            $result = $api->get( '/addons.json?enriched=true', $flush );
+            $result = $api->get( $path, $flush );
 
             $addons = array();
             if ( $this->is_api_result_object( $result, 'plugins' ) &&
@@ -17620,7 +18720,9 @@
          */
         function get_after_activation_url( $filter, $params = array(), $network = null ) {
             if ( $this->is_free_wp_org_theme() &&
-                 fs_request_has( 'pending_activation' )
+                 ( fs_request_has( 'pending_activation' ) ||
+                   // For cases when the first time path is set, even though it's a WP.org theme.
+                   fs_request_get_bool( $this->get_unique_affix() . '_show_optin' ) )
             ) {
                 $first_time_path = '';
             } else {
@@ -17752,6 +18854,8 @@
                         $this->_site = null;
                         $this->_user = null;
 
+                        $this->maybe_set_slug_and_network_menu_exists_flag();
+
                         fs_redirect( $this->get_activation_url() );
                     } else {
                         if ( $this->is_addon_activated( $plugin_id ) ) {
@@ -17771,15 +18875,23 @@
                         check_admin_referer( $action );
                     }
 
-                    if ( $plugin_id == $this->get_id() ) {
-                        $this->_downgrade_site();
+                    $switch_to_network_install_blog_after_cancellation = (
+                        is_numeric( $blog_id ) &&
+                        $plugin_id == $this->get_id() &&
+                        ! $this->is_trial()
+                    );
 
-                        if ( is_numeric( $blog_id ) ) {
-                            $this->switch_to_blog( $this->_storage->network_install_blog_id );
-                        }
-                    } else if ( $this->is_addon_activated( $plugin_id ) ) {
-                        $fs_addon = self::get_instance_by_id( $plugin_id );
-                        $fs_addon->_downgrade_site();
+                    $result = $this->cancel_subscription_or_trial( $plugin_id );
+                    if ( $this->is_api_error( $result ) ) {
+                        $this->_admin_notices->add(
+                            $result->error->message,
+                            $this->get_text_x_inline( 'Oops', 'exclamation', 'oops' ) . '...',
+                            'error'
+                        );
+                    }
+
+                    if ( $switch_to_network_install_blog_after_cancellation ) {
+                        $this->switch_to_blog( $this->_storage->network_install_blog_id );
                     }
 
                     return;
@@ -17811,7 +18923,11 @@
                             $this->_site = null;
                             $this->_user = null;
 
-                            fs_redirect( $this->get_activation_url() );
+                            if ( ! $is_network_action ) {
+                                fs_redirect( $this->get_activation_url() );
+                            } else if ( is_numeric( $blog_id ) ) {
+                                $this->switch_to_blog( $this->_storage->network_install_blog_id );
+                            }
                         }
                     } else {
                         if ( $this->is_addon_activated( $plugin_id ) ) {
@@ -17909,13 +19025,13 @@
                 #region Actions that might be called from external links (e.g. email)
 
                 case 'cancel_trial':
-                    if ( $plugin_id == $this->get_id() ) {
-                        $this->_cancel_trial();
-                    } else {
-                        if ( $this->is_addon_activated( $plugin_id ) ) {
-                            $fs_addon = self::get_instance_by_id( $plugin_id );
-                            $fs_addon->_cancel_trial();
-                        }
+                    $result = $this->cancel_subscription_or_trial( $plugin_id );
+                    if ( $this->is_api_error( $result ) ) {
+                        $this->_admin_notices->add(
+                            $result->error->message,
+                            $this->get_text_x_inline( 'Oops', 'exclamation', 'oops' ) . '...',
+                            'error'
+                        );
                     }
 
                     return;
@@ -18144,9 +19260,9 @@
             $vars = array( 'id' => $this->_module_id );
 
             if ( 'true' === fs_request_get( 'checkout', false ) ) {
-                fs_require_once_template( 'checkout.php', $vars );
+                echo $this->apply_filters( 'templates/checkout.php', fs_get_template( 'checkout.php', $vars ) );
             } else {
-                fs_require_once_template( 'pricing.php', $vars );
+                echo $this->apply_filters( 'templates/pricing.php', fs_get_template( 'pricing.php', $vars ) );
             }
         }
 
@@ -18164,7 +19280,15 @@
             $this->_logger->entrance();
 
             $vars = array( 'id' => $this->_module_id );
-            fs_require_once_template( 'contact.php', $vars );
+
+            /**
+             * Added filter to the template to allow developers wrapping the template
+             * in custom HTML (e.g. within a wizard/tabs).
+             *
+             * @author Vova Feldman (@svovaf)
+             * @since  2.1.3
+             */
+            echo $this->apply_filters( 'templates/contact.php', fs_get_template( 'contact.php', $vars ) );
         }
 
         #endregion ------------------------------------------------------------------------
@@ -18261,7 +19385,9 @@
          * @return FS_Api
          */
         private function get_current_or_network_user_api_scope( $flush = false ) {
-            if ( ! $this->_is_network_active || isset( $this->_user ) ) {
+            if ( ! $this->_is_network_active ||
+                 ( isset( $this->_user ) && $this->_user instanceof FS_User )
+            ) {
                 return $this->get_api_user_scope( $flush );
             }
 
@@ -18349,9 +19475,19 @@
          * @author Vova Feldman (@svovaf)
          * @since  1.0.9
          *
-         * @param $plans
+         * @param FS_Plugin_Plan[] $plans
          */
         function _check_for_trial_plans( $plans ) {
+            /**
+             * For some reason core's do_action() flattens arrays when it has a single object item. Therefore, we need to restructure the array as expected.
+             *
+             * @author Vova Feldman (@svovaf)
+             * @since  2.1.2
+             */
+            if ( ! is_array( $plans ) && is_object( $plans ) ) {
+                $plans = array( $plans );
+            }
+
             $this->_storage->has_trial_plan = FS_Plan_Manager::instance()->has_trial_plan( $plans );
         }
 
@@ -18458,14 +19594,14 @@
 
             // Show promotion if never shown before and 24 hours after initial activation with FS.
             if ( ! $was_promotion_shown_before &&
-                 $this->_storage->install_timestamp > ( time() - WP_FS__TIME_24_HOURS_IN_SEC )
+                 $this->_storage->install_timestamp > ( time() - $this->apply_filters( 'show_first_trial_after_n_sec', WP_FS__TIME_24_HOURS_IN_SEC ) )
             ) {
                 return false;
             }
 
             // OR if promotion was shown before, try showing it every 30 days.
             if ( $was_promotion_shown_before &&
-                 30 * WP_FS__TIME_24_HOURS_IN_SEC > time() - $last_time_trial_promotion_shown
+                 $this->apply_filters( 'reshow_trial_after_every_n_sec', 30 * WP_FS__TIME_24_HOURS_IN_SEC ) > time() - $last_time_trial_promotion_shown
             ) {
                 return false;
             }
@@ -18729,26 +19865,24 @@
         function _add_upgrade_action_link() {
             $this->_logger->entrance();
 
-            if ( $this->is_registered() ) {
-                if ( ! $this->is_paying() && $this->has_paid_plan() ) {
-                    $this->add_plugin_action_link(
-                        $this->get_text_inline( 'Upgrade', 'upgrade' ),
-                        $this->get_upgrade_url(),
-                        false,
-                        7,
-                        'upgrade'
-                    );
-                }
+            if ( ! $this->is_paying() && $this->has_paid_plan() ) {
+                $this->add_plugin_action_link(
+                    $this->get_text_inline( 'Upgrade', 'upgrade' ),
+                    $this->get_upgrade_url(),
+                    false,
+                    7,
+                    'upgrade'
+                );
+            }
 
-                if ( $this->has_addons() ) {
-                    $this->add_plugin_action_link(
-                        $this->get_text_inline( 'Add-Ons', 'add-ons' ),
-                        $this->_get_admin_page_url( 'addons' ),
-                        false,
-                        9,
-                        'addons'
-                    );
-                }
+            if ( $this->has_addons() ) {
+                $this->add_plugin_action_link(
+                    $this->get_text_inline( 'Add-Ons', 'add-ons' ),
+                    $this->_get_admin_page_url( 'addons' ),
+                    false,
+                    9,
+                    'addons'
+                );
             }
         }
 
@@ -18777,6 +19911,18 @@
                 11,
                 ( 'activate-license ' . $this->get_unique_affix() )
             );
+        }
+
+        /**
+         * @author Leo Fajardo (@leorw)
+         * @since  2.0.2
+         */
+        function _add_premium_version_upgrade_selection_action() {
+            $this->_logger->entrance();
+
+            if ( ! self::is_ajax() ) {
+                add_action( 'admin_footer', array( &$this, '_add_premium_version_upgrade_selection_dialog_box' ) );
+            }
         }
 
         /**
@@ -18881,11 +20027,23 @@
 
             if ( ! $this->is_addon() || ! $this->has_free_plan() ) {
                 $first_time_path = $this->_menu->get_first_time_path();
-                $url             = $this->is_activation_mode() ?
-                    $this->get_activation_url() :
-                    ( empty( $first_time_path ) ?
-                        $this->_get_admin_page_url() :
-                        $first_time_path );
+
+                if ( $this->is_activation_mode() ) {
+                    $url = $this->get_activation_url();
+                } else if ( ! empty( $first_time_path ) ) {
+                    $url = $first_time_path;
+                } else {
+                    $page = '';
+                    if ( ! empty( $this->_dynamically_added_top_level_page_hook_name ) ) {
+                        if ( $this->is_network_registered() ) {
+                            $page = 'account';
+                        } else if ( $this->is_network_anonymous() ) {
+                            $this->maybe_set_slug_and_network_menu_exists_flag();
+                        }
+                    }
+
+                    $url = $this->_get_admin_page_url( $page );
+                }
             } else {
                 $plugin_fs = false;
 
@@ -19006,6 +20164,21 @@
         }
 
         /**
+         * Check if the paid version of the module is installed.
+         *
+         * @author Vova Feldman (@svovaf)
+         * @since  2.2.0
+         *
+         * @return bool
+         */
+        private function is_premium_version_installed() {
+            $premium_plugin_basename = $this->premium_plugin_basename();
+            $premium_plugin          = get_plugins( '/' . dirname( $premium_plugin_basename ) );
+
+            return ! empty( $premium_plugin );
+        }
+
+        /**
          * Helper function that returns the final steps for the upgrade completion.
          *
          * If the module is already running the premium code, returns an empty string.
@@ -19030,25 +20203,140 @@
                 $plan_title = $this->get_plan_title();
             }
 
-            // @since 1.2.1.5 The free version is auto deactivated.
-            $deactivation_step = version_compare( $this->version, '1.2.1.5', '<' ) ?
-                ( '<li>' . $this->esc_html_inline( 'Deactivate the free version', 'deactivate-free-version' ) . '.</li>' ) :
-                '';
+            if ( $this->is_premium_version_installed() ) {
+                /**
+                 * If the premium version is already installed, instead of showing the installation instructions,
+                 * tell the current user to activate it.
+                 *
+                 * @author Leo Fajardo (@leorw)
+                 * @since 2.2.1
+                 */
+                $premium_plugin_basename = $this->premium_plugin_basename();
 
-            return sprintf(
-                ' %s: <ol><li>%s.</li>%s<li>%s (<a href="%s" target="_blank">%s</a>).</li></ol>',
-                $this->get_text_inline( 'Please follow these steps to complete the upgrade', 'follow-steps-to-complete-upgrade' ),
-                ( empty( $activate_license_string ) ? '' : $activate_license_string . '</li><li>' ) .
-                $this->get_latest_download_link( sprintf(
-                /* translators: %s: Plan title */
-                    $this->get_text_inline( 'Download the latest %s version', 'download-latest-x-version' ),
-                    $plan_title
-                ) ),
-                $deactivation_step,
-                $this->get_text_inline( 'Upload and activate the downloaded version', 'upload-and-activate' ),
-                '//bit.ly/upload-wp-' . $this->_module_type . 's',
-                $this->get_text_inline( 'How to upload and activate?', 'howto-upload-activate' )
-            );
+                return sprintf(
+                /* translators: %1s: Product title; %2s: Plan title */
+                    $this->get_text_inline( ' The paid version of %1s is already installed. Please activate it to start benefiting the %2s features. %3s', 'activate-premium-version' ),
+                    sprintf( '<em>%s</em>', esc_html( $this->get_plugin_title() ) ),
+                    $plan_title,
+                    sprintf(
+                        '<a style="margin-left: 10px;" href="%s"><button class="button button-primary">%s</button></a>',
+                        wp_nonce_url( 'plugins.php?action=activate&amp;plugin=' . $premium_plugin_basename, 'activate-plugin_' . $premium_plugin_basename ),
+                        esc_html( sprintf(
+                        /* translators: %s: Plan title */
+                            $this->get_text_inline( 'Activate %s features', 'activate-x-features' ),
+                            $plan_title
+                        ) )
+                    )
+                );
+            } else {
+                // @since 1.2.1.5 The free version is auto deactivated.
+                $deactivation_step = version_compare( $this->version, '1.2.1.5', '<' ) ?
+                    ( '<li>' . $this->esc_html_inline( 'Deactivate the free version', 'deactivate-free-version' ) . '.</li>' ) :
+                    '';
+
+                return sprintf(
+                    ' %s: <ol><li>%s.</li>%s<li>%s (<a href="%s" target="_blank">%s</a>).</li></ol>',
+                    $this->get_text_inline( 'Please follow these steps to complete the upgrade', 'follow-steps-to-complete-upgrade' ),
+                    ( empty( $activate_license_string ) ? '' : $activate_license_string . '</li><li>' ) .
+                    $this->get_latest_download_link( sprintf(
+                    /* translators: %s: Plan title */
+                        $this->get_text_inline( 'Download the latest %s version', 'download-latest-x-version' ),
+                        $plan_title
+                    ) ),
+                    $deactivation_step,
+                    $this->get_text_inline( 'Upload and activate the downloaded version', 'upload-and-activate' ),
+                    '//bit.ly/upload-wp-' . $this->_module_type . 's',
+                    $this->get_text_inline( 'How to upload and activate?', 'howto-upload-activate' )
+                );
+            }
+        }
+
+        /**
+         * @author Leo Fajardo (@leorw)
+         * @since 2.1.0
+         *
+         * @param string $url
+         * @param array  $request
+         */
+        private static function enrich_request_for_debug( &$url, &$request ) {
+            if ( WP_FS__DEBUG_SDK || isset( $_COOKIE['XDEBUG_SESSION'] ) ) {
+                $url = add_query_arg( 'XDEBUG_SESSION_START', rand( 0, 9999999 ), $url );
+                $url = add_query_arg( 'XDEBUG_SESSION', 'PHPSTORM', $url );
+
+                $request['cookies'] = array(
+                    new WP_Http_Cookie( array(
+                        'name'  => 'XDEBUG_SESSION',
+                        'value' => 'PHPSTORM',
+                    ) )
+                );
+            }
+        }
+
+        /**
+         * @author Leo Fajardo (@leorw)
+         * @since 2.1.0
+         *
+         * @param string      $url
+         * @param array       $request
+         * @param int         $success_cache_expiration
+         * @param int         $failure_cache_expiration
+         * @param bool        $maybe_enrich_request_for_debug
+         *
+         * @return WP_Error|array
+         */
+        static function safe_remote_post(
+            &$url,
+            $request,
+            $success_cache_expiration = 0,
+            $failure_cache_expiration = 0,
+            $maybe_enrich_request_for_debug = true
+        ) {
+            $should_cache = ($success_cache_expiration + $failure_cache_expiration > 0);
+
+            $cache_key = $should_cache ? md5( fs_strip_url_protocol($url) . json_encode( $request ) ) : false;
+
+            $response = (!WP_FS__DEBUG_SDK && ( false !== $cache_key )) ?
+                get_transient( $cache_key ) :
+                false;
+
+            if ( false === $response ) {
+                if ( $maybe_enrich_request_for_debug ) {
+                    self::enrich_request_for_debug( $url, $request );
+                }
+
+                $response = wp_remote_post( $url, $request );
+
+                if ( $response instanceof WP_Error ) {
+                    if ( 'https://' === substr( $url, 0, 8 ) &&
+                        isset( $response->errors ) &&
+                        isset( $response->errors['http_request_failed'] )
+                    ) {
+                        $http_error = strtolower( $response->errors['http_request_failed'][0] );
+
+                        if ( false !== strpos( $http_error, 'ssl' ) ||
+                            false !== strpos( $http_error, 'curl error 35' )
+                        ) {
+                            // Failed due to old version of cURL or Open SSL (SSLv3 is not supported by CloudFlare).
+                            $url = 'http://' . substr( $url, 8 );
+
+                            $request['timeout'] = 15;
+                            $response           = wp_remote_post( $url, $request );
+                        }
+                    }
+                }
+
+                if ( false !== $cache_key ) {
+                    set_transient(
+                        $cache_key,
+                        $response,
+                        ( ( $response instanceof WP_Error ) ?
+                            $failure_cache_expiration :
+                            $success_cache_expiration )
+                    );
+                }
+            }
+
+            return $response;
         }
 
         /**
@@ -19743,13 +21031,19 @@
 
                 // Locate the main assets folder.
                 if ( 1 < count( $fs_active_plugins->plugins ) ) {
-                    $plugin_or_theme_img_dir = ( $this->is_plugin() ? WP_PLUGIN_DIR : get_theme_root() );
+                    $plugin_or_theme_img_dir = ( $this->is_plugin() ? WP_PLUGIN_DIR : get_theme_root( get_stylesheet() ) );
 
                     foreach ( $fs_active_plugins->plugins as $sdk_path => &$data ) {
                         if ( $data->plugin_path == $this->get_plugin_basename() ) {
                             $img_dir = $plugin_or_theme_img_dir
                                        . '/'
-                                       . str_replace( '../themes/', '', $sdk_path )
+                                       /**
+                                        * The basename will be `themes` or the basename of a custom themes directory.
+                                        *
+                                        * @author Leo Fajardo (@leorw)
+                                        * @since 2.2.3
+                                        */
+                                       . str_replace( '../' . basename( $plugin_or_theme_img_dir ) . '/', '', $sdk_path )
                                        . '/assets/img';
 
                             break;
@@ -19768,6 +21062,10 @@
                     } else {
                         $icon_found = false;
                         $local_path = fs_normalize_path( "{$img_dir}/{$this->_slug}.png" );
+
+                        if ( ! function_exists( 'get_filesystem_method' ) ) {
+                            require_once ABSPATH . 'wp-admin/includes/file.php';
+                        }
 
                         $have_write_permissions = ( 'direct' === get_filesystem_method( array(), fs_normalize_path( $img_dir ) ) );
 
@@ -19882,6 +21180,536 @@
                 '';
         }
 
+        #--------------------------------------------------------------------------------
+        #region GDPR
+        #--------------------------------------------------------------------------------
+
+        /**
+         * @author Leo Fajardo (@leorw)
+         * @since 2.1.0
+         *
+         * @return bool
+         */
+        function fetch_and_store_current_user_gdpr_anonymously() {
+            $pong = $this->ping( null, true );
+
+            if ( ! $this->get_api_plugin_scope()->is_valid_ping( $pong ) ) {
+                return false;
+            } else {
+                FS_GDPR_Manager::instance()->store_is_required( $pong->is_gdpr_required );
+
+                return $pong->is_gdpr_required;
+            }
+        }
+
+        /**
+         * @author Leo Fajardo (@leorw)
+         * @since  2.1.0
+         *
+         * @param array $user_plugins
+         *
+         * @return string
+         */
+        private function get_gdpr_admin_notice_string( $user_plugins ) {
+            $this->_logger->entrance();
+
+            $addons = self::get_all_addons();
+
+            foreach ( $user_plugins as $user_plugin ) {
+                $has_addons = isset( $addons[ $user_plugin->id ] );
+
+                if ( WP_FS__MODULE_TYPE_PLUGIN === $user_plugin->type && ! $has_addons ) {
+                    if ( $this->_module_id == $user_plugin->id ) {
+                        $addons     = $this->get_addons();
+                        $has_addons = ( ! empty( $addons ) );
+                    } else {
+                        $plugin_api = FS_Api::instance(
+                            $user_plugin->id,
+                            'plugin',
+                            $user_plugin->id,
+                            $user_plugin->public_key,
+                            ! $user_plugin->is_live
+                        );
+
+                        $addons_result = $plugin_api->get( '/addons.json?enriched=true', true );
+
+                        if ( $this->is_api_result_object( $addons_result, 'plugins' ) &&
+                             is_array( $addons_result->plugins ) &&
+                             ! empty( $addons_result->plugins )
+                        ) {
+                            $has_addons = true;
+                        }
+                    }
+                }
+
+                $user_plugin->has_addons = $has_addons;
+            }
+
+            $is_single_parent_product = ( 1 === count( $user_plugins ) );
+
+            $multiple_products_text = '';
+
+            if ( $is_single_parent_product ) {
+                $single_parent_product = reset( $user_plugins );
+
+                $thank_you = sprintf(
+                    "<span data-plugin-id='%d'>%s</span>",
+                    $single_parent_product->id,
+                    sprintf(
+                        $single_parent_product->has_addons ?
+                            $this->get_text_inline( 'Thank you so much for using %s and its add-ons!', 'thank-you-for-using-product-and-its-addons' ) :
+                            $this->get_text_inline( 'Thank you so much for using %s!', 'thank-you-for-using-product' ),
+                        sprintf('<b><i>%s</i></b>', $single_parent_product->title)
+                    )
+                );
+
+                $already_opted_in = sprintf(
+                    $this->get_text_inline( "You've already opted-in to our usage-tracking, which helps us keep improving the %s.", 'already-opted-in-to-product-usage-tracking' ),
+                    ( WP_FS__MODULE_TYPE_THEME === $single_parent_product->type ) ? WP_FS__MODULE_TYPE_THEME : WP_FS__MODULE_TYPE_PLUGIN
+                );
+            } else {
+                $thank_you        = $this->get_text_inline( 'Thank you so much for using our products!', 'thank-you-for-using-products' );
+                $already_opted_in = $this->get_text_inline( "You've already opted-in to our usage-tracking, which helps us keep improving them.", 'already-opted-in-to-products-usage-tracking' );
+
+                $products_and_add_ons = '';
+                foreach ( $user_plugins as $user_plugin ) {
+                    if ( ! empty( $products_and_add_ons ) ) {
+                        $products_and_add_ons .= ', ';
+                    }
+
+                    if ( ! $user_plugin->has_addons ) {
+                        $products_and_add_ons .= sprintf(
+                            "<span data-plugin-id='%d'>%s</span>",
+                            $user_plugin->id,
+                            $user_plugin->title
+                        );
+                    } else {
+                        $products_and_add_ons .= sprintf(
+                            "<span data-plugin-id='%d'>%s</span>",
+                            $user_plugin->id,
+                            sprintf(
+                                $this->get_text_inline( '%s and its add-ons', 'product-and-its-addons' ),
+                                $user_plugin->title
+                            )
+                        );
+                    }
+                }
+
+                $multiple_products_text = sprintf(
+                    "<small class='products'><strong>%s:</strong> %s</small>",
+                    $this->get_text_inline( 'Products', 'products' ),
+                    $products_and_add_ons
+                );
+            }
+
+            $actions = sprintf(
+                '<ul><li>%s<span class="action-description"> - %s</span></li><li>%s<span class="action-description"> - %s</span></li></ul>',
+                sprintf('<button class="button button-primary allow-marketing">%s</button>', $this->get_text_inline( 'Yes', 'yes' ) ),
+                $this->get_text_inline( 'send me security & feature updates, educational content and offers.', 'send-updates' ),
+                sprintf('<button class="button button-secondary">%s</button>', $this->get_text_inline( 'No', 'no' ) ),
+                sprintf(
+                    $this->get_text_inline( 'do %sNOT%s send me security & feature updates, educational content and offers.', 'do-not-send-updates' ),
+                    '<span class="underlined">',
+                    '</span>'
+                )
+            );
+
+            return sprintf(
+                '%s %s %s',
+                $thank_you,
+                $already_opted_in,
+                sprintf($this->get_text_inline( 'Due to the new %sEU General Data Protection Regulation (GDPR)%s compliance requirements it is required that you provide your explicit consent, again, confirming that you are onboard 🙂', 'due-to-gdpr-compliance-requirements' ), '<a href="https://eugdpr.org/" target="_blank" rel="noopener noreferrer">', '</a>') .
+                '<br><br>' .
+                '<b>' . $this->get_text_inline( "Please let us know if you'd like us to contact you for security & feature updates, educational content, and occasional offers:", 'contact-for-updates' ) . '</b>' .
+                $actions .
+                ( $is_single_parent_product ? '' : $multiple_products_text )
+            );
+        }
+
+        /**
+         * This method is called for opted-in users to fetch the is_marketing_allowed flag of the user for all the
+         * plugins and themes they've opted in to.
+         *
+         * @author Leo Fajardo (@leorw)
+         * @since 2.1.0
+         *
+         * @param string      $user_email
+         * @param string      $license_key
+         * @param array       $plugin_ids
+         * @param string|null $license_key
+         *
+         * @return array|false
+         */
+        private function fetch_user_marketing_flag_status_by_plugins( $user_email, $license_key, $plugin_ids ) {
+            $request = array(
+                'method'  => 'POST',
+                'body'    => array(),
+                'timeout' => WP_FS__DEBUG_SDK ? 60 : 30,
+            );
+
+            if ( is_string( $user_email ) ) {
+                $request['body']['email'] = $user_email;
+            } else {
+                $request['body']['license_key'] = $license_key;
+            }
+
+            $result = array();
+
+            $url              = WP_FS__ADDRESS . '/action/service/user_plugin/';
+            $total_plugin_ids = count( $plugin_ids );
+
+            $plugin_ids_count_per_request = 10;
+            for ( $i = 1; $i <= $total_plugin_ids; $i += $plugin_ids_count_per_request ) {
+                $plugin_ids_set = array_slice( $plugin_ids, $i - 1, $plugin_ids_count_per_request );
+
+                $request['body']['plugin_ids'] = $plugin_ids_set;
+
+                $response = self::safe_remote_post(
+                    $url,
+                    $request,
+                    WP_FS__TIME_24_HOURS_IN_SEC,
+                    WP_FS__TIME_12_HOURS_IN_SEC
+                );
+
+                if ( ! is_wp_error( $response ) ) {
+                    $decoded = is_string( $response['body'] ) ?
+                        json_decode( $response['body'] ) :
+                        null;
+
+                    if (
+                        !is_object($decoded) ||
+                        !isset($decoded->success) ||
+                        true !== $decoded->success ||
+                        !isset( $decoded->data ) ||
+                        !is_array( $decoded->data )
+                    ) {
+                        return false;
+                    }
+
+                    $result = array_merge( $result, $decoded->data );
+                }
+            }
+
+            return $result;
+        }
+
+        /**
+         * @author Leo Fajardo (@leorw)
+         * @since  2.1.0
+         */
+        function _maybe_show_gdpr_admin_notice() {
+            if ( ! $this->is_user_in_admin() ) {
+                return;
+            }
+
+            if ( ! $this->should_handle_gdpr_admin_notice() ) {
+                return;
+            }
+
+            if ( ! $this->is_user_admin() ) {
+                return;
+            }
+
+            require_once WP_FS__DIR_INCLUDES . '/class-fs-user-lock.php';
+
+            $lock = FS_User_Lock::instance();
+
+            /**
+             * Try to acquire a 60-sec lock based on the WP user and thread/process ID.
+             */
+            if ( ! $lock->try_lock( 60 ) ) {
+                return;
+            }
+
+            /**
+             * @var $current_wp_user WP_User
+             */
+            $current_wp_user = self::_get_current_wp_user();
+
+            /**
+             * @var FS_User $current_fs_user
+             */
+            $current_fs_user = Freemius::_get_user_by_email( $current_wp_user->user_email );
+
+            $ten_years_in_sec = 10 * 365 * WP_FS__TIME_24_HOURS_IN_SEC;
+
+            if ( ! is_object( $current_fs_user ) ) {
+                // 10-year lock.
+                $lock->lock( $ten_years_in_sec );
+
+                return;
+            }
+
+            $gdpr = FS_GDPR_Manager::instance();
+
+            if ( $gdpr->is_opt_in_notice_shown() ) {
+                // 30-day lock.
+                $lock->lock( 30 * WP_FS__TIME_24_HOURS_IN_SEC );
+
+                return;
+            }
+
+            if ( ! $gdpr->should_show_opt_in_notice() ) {
+                // 10-year lock.
+                $lock->lock( $ten_years_in_sec );
+
+                return;
+            }
+
+            $last_time_notice_shown  = $gdpr->last_time_notice_was_shown();
+            $was_notice_shown_before = ( false !== $last_time_notice_shown );
+
+            if ( $was_notice_shown_before &&
+                 30 * WP_FS__TIME_24_HOURS_IN_SEC > time() - $last_time_notice_shown
+            ) {
+                // If the notice was shown before, show it again after 30 days from the last time it was shown.
+                return;
+            }
+
+            /**
+             * Find all plugin IDs that were installed by the current admin.
+             */
+            $plugin_ids_map = self::get_user_opted_in_module_ids_map( $current_fs_user->id );
+
+            if ( empty( $plugin_ids_map )) {
+                $lock->lock( $ten_years_in_sec );
+
+                return;
+            }
+
+            $user_plugins = $this->fetch_user_marketing_flag_status_by_plugins(
+                $current_fs_user->email,
+                null,
+                array_keys( $plugin_ids_map )
+            );
+
+            if ( empty( $user_plugins ) ) {
+                $lock->lock(
+                    is_array($user_plugins) ?
+                        $ten_years_in_sec :
+                        // Lock for 24-hours on errors.
+                        WP_FS__TIME_24_HOURS_IN_SEC
+                );
+
+                return;
+            }
+
+            $has_unset_marketing_optin = false;
+
+            foreach ( $user_plugins as $user_plugin ) {
+                if ( true == $user_plugin->is_marketing_allowed ) {
+                    unset( $plugin_ids_map[ $user_plugin->plugin_id ] );
+                }
+
+                if ( ! $has_unset_marketing_optin && is_null( $user_plugin->is_marketing_allowed ) ) {
+                    $has_unset_marketing_optin = true;
+                }
+            }
+
+            if ( empty( $plugin_ids_map ) ||
+                 ( $was_notice_shown_before && ! $has_unset_marketing_optin )
+            ) {
+                $lock->lock( $ten_years_in_sec );
+
+                return;
+            }
+
+            $modules = array_merge(
+                array_values( self::$_accounts->get_option( 'plugins', array() ) ),
+                array_values( self::$_accounts->get_option( 'themes', array() ) )
+            );
+
+            foreach ( $modules as $module ) {
+                if ( ! FS_Plugin::is_valid_id( $module->parent_plugin_id ) && isset( $plugin_ids_map[ $module->id ] ) ) {
+                    $plugin_ids_map[ $module->id ] = $module;
+                }
+            }
+
+            $plugin_title = null;
+            if ( 1 === count( $plugin_ids_map ) ) {
+                $module       = reset( $plugin_ids_map );
+                $plugin_title = $module->title;
+            }
+
+            $gdpr->add_opt_in_sticky_notice(
+                $this->get_gdpr_admin_notice_string( $plugin_ids_map ),
+                $plugin_title
+            );
+
+            $this->add_gdpr_optin_ajax_handler_and_style();
+
+            $gdpr->notice_was_just_shown();
+
+            // 30-day lock.
+            $lock->lock( 30 * WP_FS__TIME_24_HOURS_IN_SEC );
+        }
+
+        /**
+         * Prevents the GDPR opt-in admin notice from being added if the user has already chosen to allow or not allow
+         * marketing.
+         *
+         * @author Leo Fajardo (@leorw)
+         * @since  2.1.0
+         */
+        private function disable_opt_in_notice_and_lock_user() {
+            FS_GDPR_Manager::instance()->disable_opt_in_notice();
+
+            require_once WP_FS__DIR_INCLUDES . '/class-fs-user-lock.php';
+
+            // 10-year lock.
+            FS_User_Lock::instance()->lock( 10 * 365 * WP_FS__TIME_24_HOURS_IN_SEC );
+        }
+
+        /**
+         * @author Leo Fajardo (@leorw)
+         * @since  2.1.0
+         */
+        function _add_gdpr_optin_js() {
+            $vars = array( 'id' => $this->_module_id );
+
+            fs_require_once_template( 'gdpr-optin-js.php', $vars );
+        }
+
+        /**
+         * @author Leo Fajardo (@leorw)
+         * @since  2.1.0
+         */
+        function enqueue_gdpr_optin_notice_style() {
+            fs_enqueue_local_style( 'fs_gdpr_optin_notice', '/admin/gdpr-optin-notice.css' );
+        }
+
+        /**
+         * @author Leo Fajardo (@leorw)
+         * @since  2.1.0
+         */
+        function _maybe_add_gdpr_optin_ajax_handler() {
+            $this->add_ajax_action( 'fetch_is_marketing_required_flag_value', array( &$this, '_fetch_is_marketing_required_flag_value_ajax_action' ) );
+
+            if ( FS_GDPR_Manager::instance()->is_opt_in_notice_shown() ) {
+                $this->add_gdpr_optin_ajax_handler_and_style();
+            }
+        }
+
+        /**
+         * @author Leo Fajardo (@leorw)
+         * @since 2.1.0
+         */
+        function _fetch_is_marketing_required_flag_value_ajax_action() {
+            $this->_logger->entrance();
+
+            $this->check_ajax_referer( 'fetch_is_marketing_required_flag_value' );
+
+            $license_key = fs_request_get( 'license_key' );
+
+            if ( empty($license_key) ) {
+                self::shoot_ajax_failure( $this->get_text_inline( 'License key is empty.', 'empty-license-key' ) );
+            }
+
+            $user_plugins = $this->fetch_user_marketing_flag_status_by_plugins(
+                null,
+                $license_key,
+                array( $this->_module_id )
+            );
+
+            if ( ! is_array( $user_plugins ) ||
+                 empty($user_plugins) ||
+                 !isset($user_plugins[0]->plugin_id) ||
+                 $user_plugins[0]->plugin_id != $this->_module_id
+            ) {
+                /**
+                 * If faced an error or if the module ID do not match to the current module, ask for GDPR opt-in.
+                 *
+                 * @author Vova Feldman (@svovaf)
+                 */
+                self::shoot_ajax_success( array( 'is_marketing_allowed' => null ) );
+            }
+
+            self::shoot_ajax_success( array( 'is_marketing_allowed' => $user_plugins[0]->is_marketing_allowed ) );
+        }
+
+        /**
+         * @author Leo Fajardo (@leorw)
+         * @since  2.1.0
+         */
+        private function add_gdpr_optin_ajax_handler_and_style() {
+            // Add GDPR action AJAX callback.
+            $this->add_ajax_action( 'gdpr_optin_action', array( &$this, '_gdpr_optin_ajax_action' ) );
+
+            add_action( 'admin_footer', array( &$this, '_add_gdpr_optin_js' ) );
+            add_action( 'admin_enqueue_scripts', array( &$this, 'enqueue_gdpr_optin_notice_style' ) );
+        }
+
+        /**
+         * @author Leo Fajardo (@leorw)
+         * @since  2.1.0
+         */
+        function _gdpr_optin_ajax_action() {
+            $this->_logger->entrance();
+
+            $this->check_ajax_referer( 'gdpr_optin_action' );
+
+            if ( ! fs_request_has( 'is_marketing_allowed' ) || ! fs_request_has( 'plugin_ids' ) ) {
+                self::shoot_ajax_failure();
+            }
+
+            $current_wp_user = self::_get_current_wp_user();
+
+            $plugin_ids = fs_request_get( 'plugin_ids', array() );
+            if ( ! is_array( $plugin_ids ) || empty( $plugin_ids ) ) {
+                self::shoot_ajax_failure();
+            }
+
+            $modules = array_merge(
+                array_values( self::$_accounts->get_option( 'plugins', array() ) ),
+                array_values( self::$_accounts->get_option( 'themes', array() ) )
+            );
+
+            foreach ( $modules as $key => $module ) {
+                if ( ! in_array( $module->id, $plugin_ids ) ) {
+                    unset( $modules[ $key ] );
+                }
+            }
+
+            if ( empty( $modules ) ) {
+                self::shoot_ajax_failure();
+            }
+
+            $user_api = $this->get_api_user_scope_by_user( Freemius::_get_user_by_email( $current_wp_user->user_email ) );
+
+            foreach ( $modules as $module ) {
+                $user_api->call( "?plugin_id={$module->id}", 'put', array(
+                    'is_marketing_allowed' => ( true == fs_request_get_bool( 'is_marketing_allowed' ) )
+                ) );
+            }
+
+            FS_GDPR_Manager::instance()->remove_opt_in_notice();
+
+            require_once WP_FS__DIR_INCLUDES . '/class-fs-user-lock.php';
+
+            // 10-year lock.
+            FS_User_Lock::instance()->lock( 10 * 365 * WP_FS__TIME_24_HOURS_IN_SEC );
+
+            self::shoot_ajax_success();
+        }
+
+        /**
+         * Checks if the GDPR admin notice should be handled. By default, this logic is off, unless the integrator adds the special 'handle_gdpr_admin_notice' filter.
+         *
+         * @author Vova Feldman (@svovaf)
+         * @since  2.1.0
+         *
+         * @return bool
+         */
+        private function should_handle_gdpr_admin_notice() {
+            return $this->apply_filters(
+                'handle_gdpr_admin_notice',
+                // Default to false.
+                false
+            );
+        }
+
+        #endregion
+
         #----------------------------------------------------------------------------------
         #region Marketing
         #----------------------------------------------------------------------------------
@@ -19936,6 +21764,30 @@
         function is_business() {
             // TODO: Implement is_business() method.
             throw new Exception( 'not implemented' );
+        }
+
+        #endregion
+
+        #----------------------------------------------------------------------------------
+        #region Helper
+        #----------------------------------------------------------------------------------
+
+        /**
+         * If running with a secret key, assume it's the developer and show pending plans as well.
+         *
+         * @author Vova Feldman (@svovaf)
+         * @since  2.1.2
+         *
+         * @param string $path
+         *
+         * @return string
+         */
+        function add_show_pending( $path ) {
+            if ( ! $this->has_secret_key() ) {
+                return $path;
+            }
+
+            return $path . ( false !== strpos( $path, '?' ) ? '&' : '?' ) . 'show_pending=true';
         }
 
         #endregion
