@@ -59,10 +59,18 @@ class BuddyForms_WC_Vendors_Component extends BP_Component {
 
 		$bp_wcv_options = bp_wcv_get_options();
 
-		if( class_exists('WCVendors_Pro') ){
+		if ( class_exists( 'WCVendors_Pro' ) ) {
 			$dashboard_page_id = WCVendors_Pro::get_option( 'dashboard_page_id' );
-		} else{
+		} else {
 			$dashboard_page_id = WC_Vendors::$pv_options->get_option( 'vendor_dashboard_page' );
+		}
+
+		if ( empty( $dashboard_page_id ) ) {
+			return;
+		}
+
+		if ( is_array( $dashboard_page_id ) ) {
+			$dashboard_page_id = $dashboard_page_id[0];
 		}
 
 		$dashboard_page_title = get_the_title( $dashboard_page_id );
