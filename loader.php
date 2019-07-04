@@ -1,14 +1,15 @@
 <?php
 /*
- Plugin Name: BP WC Vendors
- Plugin URI: https://themekraft.com/products/bp-wc-vendors/
- Description: Integrates the WC Vendors Pro Plugin With BuddyPress
- Version: 1.1.5
- Author: ThemeKraft
- Author URI: http://themekraft.com/
- License: GPLv3 or later
- Network: false
-
+ * Plugin Name: BP WC Vendors
+ *Plugin URI: https://themekraft.com/products/bp-wc-vendors/
+ * Description: Integrates the WC Vendors Pro Plugin With BuddyPress
+ * Version: 1.1.5
+ * Author: ThemeKraft
+ * Author URI: http://themekraft.com/
+ * License: GPLv3 or later
+ * Network: false
+ * Svn: bp-wc-vendors
+ *
  *****************************************************************************
  *
  * This script is free software; you can redistribute it and/or modify
