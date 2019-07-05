@@ -1,8 +1,8 @@
 === BP WC Vendors ===
-Contributors: svenl77, themekraft, buddyforms,
+Contributors: svenl77, themekraft, buddyforms, gfirem
 Tags: multi vendor, marketplace, buddypress, woocommerce, vendor stores, vendors, wc-vendors, wc vendors, wc4bp , buddyforms, marketplace, user, members, profiles, custom post types, taxonomy, frontend posting, frontend editing, revision, review, moderation, frontend editor
 Requires at least: WordPress 3.9
-Tested up to: WordPress 5.0
+Tested up to: WordPress 5.2.2
 Stable tag: 1.1.6
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
